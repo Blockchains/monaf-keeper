@@ -1,0 +1,2 @@
+{ "name": "monaf-keeper", "private": true, "version": "0.0.1", "license": "MIT", "type": "module",
+  "dependencies": { "viem": "^2.57.7" } }

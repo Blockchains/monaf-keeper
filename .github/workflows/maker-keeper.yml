@@ -1,0 +1,57 @@
+name: Maker keeper v4 (primary)
+# Always-on PRIMARY copy of engine/maker-keeper-v4.mts. A box copy is standby and only sends when this job's lease
+# (locked issue comment, see LEADER-LEASE.md) is >25 s stale or released. One job runs ~5h50m, releases the lease,
+# re-dispatches itself and exits; the 5-min cron is a safety net. Concurrency: at most one running.
+# SECURITY: triggers are schedule + workflow_dispatch ONLY. Never add pull_request / pull_request_target / issue_comment /
+# workflow_run triggers: this job holds a signing key.
+on:
+  schedule: [{cron: "*/5 * * * *"}]
+  workflow_dispatch:
+permissions: {}
+concurrency: {group: maker-keeper-v4, cancel-in-progress: false}
+jobs:
+  keeper:
+    if: github.repository == 'Blockchains/monaf-keeper' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 358
+    permissions: {contents: read, issues: write, actions: write}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with: {persist-credentials: false}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with: {node-version: 22}
+      - name: Install (lockfile, no scripts)
+        run: npm ci --ignore-scripts --no-audit --no-fund --loglevel=error >/dev/null
+      - name: Run keeper (~5h50m) then hand off
+        env:
+          MAKER_KEEPER_KEY: ${{ secrets.MAKER_KEEPER_PK }}
+          QN_HTTP: ${{ secrets.MONAD_RPC_URL }}
+          QN_WSS: ${{ secrets.MONAD_WSS_URL }}
+          VAULT: "0x760Fab1796480368Fed4084ae1a01491577A2180"
+          MONAF_MAKER_LIVE: "1"
+          GH_TOKEN: ${{ github.token }}
+          LEASE_REPO: ${{ github.repository }}
+          LEASE_ROLE: primary
+          LEASE_COMMENT_ID: ${{ vars.LEASE_COMMENT_ID }}
+          LEASE_INSTANCE: actions-${{ github.run_id }}-${{ github.run_attempt }}
+          STATUS: /tmp/mk/status.json
+        run: |
+          for v in "$MAKER_KEEPER_KEY" "$QN_HTTP" "$QN_WSS"; do
+            [ -n "$v" ] || continue; echo "::add-mask::$v"
+            # also mask the host and path pieces of URLs (endpoint name / token) in case they appear split
+            for p in $(printf '%s' "$v" | sed -E 's#^[a-z]+://##' | tr '/?&=' '    '); do [ ${#p} -ge 8 ] && echo "::add-mask::$p"; done
+          done
+          [ -n "$MAKER_KEEPER_KEY" ] && [ -n "$QN_HTTP" ] && [ -n "$LEASE_COMMENT_ID" ] || { echo "missing secret/var"; exit 1; }
+          mkdir -p /tmp/mk; echo "started=$(date +%s)" >> "$GITHUB_ENV"
+          end=$(( $(date +%s) + 21000 ))   # 5h50m
+          # restart the keeper if it crashes, until the window ends; output is redacted (urls) and nothing is uploaded
+          while [ $(date +%s) -lt $(( end - 60 )) ]; do
+            export RUN_FOR_S=$(( end - $(date +%s) ))
+            node --experimental-strip-types --no-warnings engine/maker-keeper-v4.mts 2>&1 | sed -uE 's#(https?|wss?)://[^ "]+#<rpc>#g' || true
+            sleep 5
+          done
+      - name: Self-chain
+        if: always() && !cancelled()
+        env: {GH_TOKEN: "${{ github.token }}", GH_REPO: "${{ github.repository }}"}
+        # only after a long run: a job that dies early is restarted by the 5-min cron instead (no tight re-dispatch loop)
+        run: '[ $(( $(date +%s) - ${started:-$(date +%s)} )) -gt 3000 ] && gh workflow run maker-keeper.yml --ref main || echo "short run: leaving restart to cron"'
