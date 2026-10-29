@@ -44,12 +44,13 @@ const vaultAbi = parseAbi(['function place(int24 tickLower,uint128 liquidity,uin
 const book: Book = existsSync(BOOK) ? JSON.parse(readFileSync(BOOK, 'utf8')) : { ...newBook(), day: '', gasMon: 0 };
 book.orders.forEach(migrateOrder); // pre-fix book: amt/startAmt were amountMax (0.1% more than minted)
 const envNum = (k: string, d: number) => { const r = process.env[k], v = Number(r); return r !== undefined && r !== '' && Number.isFinite(v) ? v : d; };
-const TUN = { recentreTicks: envNum('MAKER_RECENTRE_TICKS', STRATEGY.recentreTicks), recentreMs: envNum('MAKER_RECENTRE_MIN', STRATEGY.recentreMs / 60_000) * 60_000, deployIdle: process.env.MAKER_DEPLOY_IDLE !== '0' };
+const TUN = { recentreTicks: envNum('MAKER_RECENTRE_TICKS', STRATEGY.recentreTicks), recentreMs: envNum('MAKER_RECENTRE_MIN', STRATEGY.recentreMs / 60_000) * 60_000, deployIdle: process.env.MAKER_DEPLOY_IDLE !== '0', stopTicks: envNum('MAKER_STOP_TICKS', STRATEGY.stopTicks) };
 const TIP_GWEI = tipGwei(envNum('MAKER_TIP_GWEI', STRATEGY.tipGwei), envNum('MAKER_MIN_TIP_GWEI', 0)), TIP = BigInt(Math.round(TIP_GWEI * 1e9));
 const st = book as Book & { day: string; gasMon: number };
 const save = () => writeFileSync(BOOK, JSON.stringify(book, null, 1));
 { const was = clearHaltOnStart(book); if (was) { console.log(`${new Date().toISOString()} startup: cleared persisted halt "${was}" (only STOP stops the bot)`); save(); } }
 let needReconcile = true, waiting = '', busySince = 0, wakes = 0, txs: { place: number; close: number; fail: number; batch?: number } = { place: 0, close: 0, fail: 0 }; const startedAt = new Date().toISOString();
+const tickHist: [number, number][] = []; // D4: (time, tick) of the last ~10 s
 let nonce = -1, tick = 0, head = 0n, lastBlockAt = Date.now(), busy = false, feed = 'http', gasPrice = 0n, dryId = 0, live = false, vaultState = { active: false, paused: false };
 const log: string[] = []; const note = (s: string) => { log.push(`${new Date().toISOString()} ${s}`); if (log.length > 50) log.shift(); console.log(log.at(-1)); };
 
@@ -125,7 +126,7 @@ async function onBlock(n: bigint) {
       [act, pau] = [sn[0], sn[1]]; s0 = [sn[3], sn[2]]; gp = g; snapBal = [sn[4], sn[5]]; }
     else [s0, gp, act, pau] = await Promise.all([pub.readContract({ address: V4.stateView as Address, abi: svAbi, functionName: 'getSlot0', args: [V4.poolId] }), pub.getGasPrice(),
       VAULT ? pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'active' }) : false, VAULT ? pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'paused' }) : false]);
-    tick = Number(s0[1]); gasPrice = gp; vaultState = { active: act, paused: pau };
+    tick = Number(s0[1]); gasPrice = gp; tickHist.push([Date.now(), tick]); while (tickHist.length && Date.now() - tickHist[0][0] > 10_000) tickHist.shift(); vaultState = { active: act, paused: pau };
     if (isLeader()) { const ob = observe(book, tick); for (const o of ob.crossed) note(`filled ${o.side} [${o.lower},${o.lower + 1}) #${o.id}: held in place as its own exit`);
       for (const o of ob.returned) note(`round trip ${o.rounds} done: ${o.side} [${o.lower},${o.lower + 1}) #${o.id} back to its start asset`); if (ob.crossed.length + ob.returned.length) save(); }
     const nowLive = WANT_LIVE && act && !pau;
@@ -135,7 +136,7 @@ async function onBlock(n: bigint) {
     if (needReconcile) { if (live) await reconcileOnChain(); else needReconcile = false; }
     const [monW, wethW] = snapBal ?? (VAULT ? await Promise.all([pub.getBalance({ address: VAULT }), pub.readContract({ address: V4.weth as Address, abi: ercAbi, functionName: 'balanceOf', args: [VAULT] })]) : [0n, 0n]);
     const inv = VAULT ? { mon: Number(monW) / 1e18, weth: Number(wethW) / 1e18 } : undefined;
-    const ok = { gas: gp <= BigInt(STRATEGY.gasCapGwei * 1e9), fresh: gapS <= STRATEGY.staleNoNewS, gasGwei: Number(gp + TIP) / 1e9 };
+    const ok = { gas: gp <= BigInt(STRATEGY.gasCapGwei * 1e9), fresh: gapS <= STRATEGY.staleNoNewS, gasGwei: Number(gp + TIP) / 1e9, calm: Math.max(...tickHist.map(h => h[1])) - Math.min(...tickHist.map(h => h[1])) <= STRATEGY.placeMaxMoveTicks };
     const w = waitReason(book, tick, Date.now(), ok); if (w !== waiting) { note(w ? `wait: ${w}` : `resume: trading`); waiting = w; }
     const acts = plan(book, tick, Date.now(), ok, inv, TUN);
     if (V5 && live && acts.filter(a => a.do !== 'halt').length > 1) { await runBatch(acts); return; } // one tx for all of this block's work
@@ -198,14 +199,14 @@ setInterval(() => {   // heartbeat for the supervisor; wake / clock-jump detecti
 }, 2_000);
 feedObj.start();
 process.on('SIGUSR2', () => feedObj.resync('SIGUSR2 (simulated WS drop)')); // ops/test: drop WS now, HTTP fallback + reconnect
-note(`maker keeper v4${V5 ? ' (vault V5: snapshot + batched execute)' : ''} ${WANT_LIVE ? 'LIVE requested (needs vault active + unpaused)' : 'DRY RUN'} <= ${STRATEGY.sizeMonEq} MON-eq/order, 1 per side, filled = own exit, tip ${TIP_GWEI} gwei, gas limit x${STRATEGY.gasMult}, recentre > ${TUN.recentreTicks} ticks & >= ${TUN.recentreMs / 60_000} min; never-stall mode (no keeperPause)`);
+note(`maker keeper v4${V5 ? ' (vault V5: snapshot + batched execute)' : ''} ${WANT_LIVE ? 'LIVE requested (needs vault active + unpaused)' : 'DRY RUN'} ${STRATEGY.sizeMinMonEq}-${STRATEGY.sizeMonEq} MON-eq/order skewed to inventory, stop held exits > ${TUN.stopTicks} ticks, loss guard realised+gas -${STRATEGY.dailyLossFrac * 2 * STRATEGY.sizeMonEq} MON, no place if > ${STRATEGY.placeMaxMoveTicks} ticks/10 s, filled = own exit, tip ${TIP_GWEI} gwei, gas limit x${STRATEGY.gasMult}, recentre > ${TUN.recentreTicks} ticks & >= ${TUN.recentreMs / 60_000} min; never-stall mode (no keeperPause)`);
 
 // leader lease (box <-> GitHub Actions); the lease carries the open book so a takeover continues the same positions
 const leaseHooks = {
   note,
-  snapshot: () => ({ orders: book.orders, sidePaused: book.sidePaused, halted: '', day: st.day, dayPnl: st.dayPnl, dayGas: st.dayGas, dayMtm0: (st as any).dayMtm0 ?? null }),
+  snapshot: () => ({ orders: book.orders, sidePaused: book.sidePaused, halted: '', day: st.day, dayPnl: st.dayPnl, dayGas: st.dayGas }),
   adopt: (b: any, from: string) => { if (!b || !Array.isArray(b.orders) || b.orders.some((o: Ord) => String(o.id).startsWith('dry'))) return; book.orders = b.orders.map(migrateOrder); book.sidePaused = b.sidePaused ?? book.sidePaused;
-    if (b.day === st.day || !st.day) { st.day = b.day; st.dayPnl = b.dayPnl ?? st.dayPnl; st.dayGas = b.dayGas ?? st.dayGas; if (b.dayMtm0 !== undefined) (st as any).dayMtm0 = b.dayMtm0; } needReconcile = true; save(); note(`lease: adopted book from ${from} (${book.orders.length} open)`); },
+    if (b.day === st.day || !st.day) { st.day = b.day; st.dayPnl = b.dayPnl ?? st.dayPnl; st.dayGas = b.dayGas ?? st.dayGas; } needReconcile = true; save(); note(`lease: adopted book from ${from} (${book.orders.length} open)`); },
 };
 if (WANT_LIVE) await startLease(leaseHooks); // dry runs never touch the shared lease
 const runFor = Number(process.env.RUN_FOR_S ?? 0); // Actions: graceful hand-off before the 6h job limit

@@ -17,13 +17,13 @@ test('stale data -> wait (no new orders, no on-chain pause), then auto-resume on
 });
 
 test('daily loss: no new orders, fills still exit, auto-resets at next UTC day', () => {
-  const b: any = { ...newBook(), day: '' }; rollDay(b, T0); b.dayGas = 26;
+  const b: any = { ...newBook(), day: '' }; rollDay(b, T0); b.dayGas = 41;
   assert.match(waitReason(b, 0, T0, { gas: true, fresh: true }), /daily loss.*resumes 2026-10-30T00:00:00/);
   assert.equal(plan(b, 0, T0, { gas: true, fresh: true }).length, 0);
   applyPlace(b, { do: 'place', kind: 'fresh', side: 'ask', lower: 1, amt: 100 }, '7', 100, T0, 0);
   const ob = observe(b, 3); const acts = plan(b, 3, T0, { gas: true, fresh: true }); // ask filled at tick 3: held in place as its own exit (no tx)
   assert.equal(ob.crossed.length, 1); assert.equal(acts.length, 0); assert.equal(b.orders[0].crossed, true);
-  b.halted = 'daily loss -26 MON';                                         // even an old persisted latch clears
+  b.halted = 'daily loss -41 MON';                                         // even an old persisted latch clears
   assert.equal(rollDay(b, T0 + 3600_000), false);
   assert.equal(rollDay(b, Date.parse('2026-10-30T00:00:01Z')), true);
   assert.equal(b.dayGas, 0); assert.equal(b.halted, ''); assert.equal(waitReason(b, 0, T0, { gas: true, fresh: true }), '');
