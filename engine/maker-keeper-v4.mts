@@ -18,7 +18,7 @@ import { createPublicClient, http, webSocket, parseAbi, parseEventLogs, encodeFu
 import { privateKeyToAccount } from 'viem/accounts';
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { BlockFeed } from './maker-v4-feed.mts';
-import { V4, STRATEGY, plan, observe, waitReason, rollDay, clearHaltOnStart, reconcile, applyClose, applyPlace, proceeds, liquidityFor, amountFor, migrateOrder, gasLimit, tipGwei, mtm, newBook, type Book, type Ord, type Side } from './maker-v4-lib.mts';
+import { V4, STRATEGY, plan, observe, waitReason, rollDay, clearHaltOnStart, reconcile, applyClose, applyPlace, proceeds, liquidityFor, amountFor, migrateOrder, gasLimit, gasSane, clampGeometry, tipGwei, mtm, newBook, type Book, type Ord, type Side } from './maker-v4-lib.mts';
 import { startLease, canSend, isLeader, releaseLease, leaseStatus } from './maker-leader.mts';
 
 const WANT_LIVE = process.env.MONAF_MAKER_LIVE === '1', FORK = process.env.FORK === '1';
@@ -37,14 +37,14 @@ const ercAbi = parseAbi(['function balanceOf(address) view returns (uint256)']);
 const svAbi = parseAbi(['function getSlot0(bytes32) view returns (uint160,int24,uint24,uint24)']);
 const vaultAbi = parseAbi(['function place(int24 tickLower,uint128 liquidity,uint128 amountMax,uint256 deadline) returns (uint256)', 'function close(uint256 tokenId,uint256 deadline) returns (uint256,uint256)',
   'function openCount() view returns (uint256)', 'function openIds(uint256) view returns (uint256)', 'function paused() view returns (bool)', 'function active() view returns (bool)', 'function keeper() view returns (address)', 'function poolId() view returns (bytes32)',
-  'function VERSION() view returns (uint8)', 'function snapshot() view returns (bool,bool,int24,uint160,uint256,uint256,uint256[])',
+  'function VERSION() view returns (uint8)', 'function maxDistanceTicks() view returns (int24)', 'function snapshot() view returns (bool,bool,int24,uint160,uint256,uint256,uint256[])',
   'function execute(uint256[] closeIds,(int24 tickLower,uint128 liquidity,uint128 amountMax)[] orders,uint256 deadline) returns (uint256)',
   'event Placed(uint256 indexed tokenId, int24 tickLower, bool sellMon, uint128 liquidity, uint256 amountMax)', 'event Closed(uint256 indexed tokenId, uint256 mon, uint256 weth)']);
 
 const book: Book = existsSync(BOOK) ? JSON.parse(readFileSync(BOOK, 'utf8')) : { ...newBook(), day: '', gasMon: 0 };
 book.orders.forEach(migrateOrder); // pre-fix book: amt/startAmt were amountMax (0.1% more than minted)
 const envNum = (k: string, d: number) => { const r = process.env[k], v = Number(r); return r !== undefined && r !== '' && Number.isFinite(v) ? v : d; };
-const TUN = { recentreTicks: envNum('MAKER_RECENTRE_TICKS', STRATEGY.recentreTicks), recentreMs: envNum('MAKER_RECENTRE_MIN', STRATEGY.recentreMs / 60_000) * 60_000, deployIdle: process.env.MAKER_DEPLOY_IDLE !== '0', stopTicks: envNum('MAKER_STOP_TICKS', STRATEGY.stopTicks) };
+const TUN = { recentreTicks: envNum('MAKER_RECENTRE_TICKS', STRATEGY.recentreTicks), recentreMs: envNum('MAKER_RECENTRE_MIN', STRATEGY.recentreMs / 60_000) * 60_000, deployIdle: process.env.MAKER_DEPLOY_IDLE !== '0', stopTicks: envNum('MAKER_STOP_TICKS', STRATEGY.stopTicks), geo: undefined as undefined | ReturnType<typeof clampGeometry> };
 const TIP_GWEI = tipGwei(envNum('MAKER_TIP_GWEI', STRATEGY.tipGwei), envNum('MAKER_MIN_TIP_GWEI', 0)), TIP = BigInt(Math.round(TIP_GWEI * 1e9));
 const st = book as Book & { day: string; gasMon: number };
 const save = () => writeFileSync(BOOK, JSON.stringify(book, null, 1));
@@ -61,6 +61,14 @@ if (VAULT) { // refuse a vault that is not wired to the verified pool / this kee
 }
 /** V5 vault (MonafMakerVaultV5): one snapshot() read per block, standing approvals, batched execute(). V4 = unchanged per-op txs. */
 const V5 = VAULT ? await pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'VERSION' }).then(v => Number(v) === 5).catch(() => false) : false;
+/** Phase 1 geometry (offset / width from spot), clamped to what the vault can mint: V5 = fixed 1-tick ranges and maxDistanceTicks
+ *  (owner-only setLimits). Re-read every 5 min so an owner limit change is picked up without a restart. */
+const WANT_GEO = { offset: envNum('MAKER_OFFSET_TICKS', STRATEGY.offsetTicks), width: envNum('MAKER_WIDTH_TICKS', STRATEGY.widthTicks) };
+const readDist = async () => VAULT ? Number(await pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'maxDistanceTicks' })) : undefined;
+const setGeo = (dist?: number) => { const g = clampGeometry(WANT_GEO, { fixedWidth: 1 /* V4/V5 vaults mint [tickLower, tickLower+1) only */, maxDistance: dist }); const was = JSON.stringify(TUN.geo); TUN.geo = g;
+  if (was !== JSON.stringify(g)) note(`geometry: offset ${g.offset} width ${g.width} (wanted ${WANT_GEO.offset}/${WANT_GEO.width}${g.clamped ? `; CLAMPED by vault: fixed 1-tick ranges, maxDistanceTicks ${dist}` : ''})`); };
+setGeo(await readDist());
+setInterval(() => { readDist().then(setGeo).catch(() => {}); }, 300_000);
 
 /** Gas limit: estimate x 1.03; if estimateGas fails but eth_call succeeds (RPC flake), the fixed per-type fallback. A real revert throws here: nothing is sent. */
 async function gasFor(data: Hex, kinds: (Side | 'close')[]): Promise<{ gas: bigint; fallback: boolean }> {
@@ -83,6 +91,7 @@ async function send(fn: 'place' | 'close' | 'execute', args: readonly unknown[],
   const kinds = Array.isArray(kind) ? kind : [kind];
   if (planTick !== undefined && !(await tickUnchanged(planTick))) throw new Error(`tick moved since plan (${planTick}): place skipped, no tx sent`);
   let { gas, fallback } = await gasFor(data, kinds);
+  if (!gasSane(gas, kinds)) throw new Error(`gas limit ${gas} > ${STRATEGY.gasSanityMult}x real usage for ${kinds.join('+')}: skipped, no tx sent`);
   for (let attempt = 0; ; attempt++) {
     nonce = await pub.getTransactionCount({ address: account!.address, blockTag: 'pending' }); // reload pending nonce every send (wake / hand-off safe)
     const raw = await account!.signTransaction({ chainId: V4.chainId, type: 'eip1559', to: VAULT, nonce, gas, maxFeePerGas: gasPrice * 12n / 10n + TIP, maxPriorityFeePerGas: TIP, data });
@@ -127,8 +136,8 @@ async function onBlock(n: bigint) {
     else [s0, gp, act, pau] = await Promise.all([pub.readContract({ address: V4.stateView as Address, abi: svAbi, functionName: 'getSlot0', args: [V4.poolId] }), pub.getGasPrice(),
       VAULT ? pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'active' }) : false, VAULT ? pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'paused' }) : false]);
     tick = Number(s0[1]); gasPrice = gp; tickHist.push([Date.now(), tick]); while (tickHist.length && Date.now() - tickHist[0][0] > 10_000) tickHist.shift(); vaultState = { active: act, paused: pau };
-    if (isLeader()) { const ob = observe(book, tick); for (const o of ob.crossed) note(`filled ${o.side} [${o.lower},${o.lower + 1}) #${o.id}: held in place as its own exit`);
-      for (const o of ob.returned) note(`round trip ${o.rounds} done: ${o.side} [${o.lower},${o.lower + 1}) #${o.id} back to its start asset`); if (ob.crossed.length + ob.returned.length) save(); }
+    if (isLeader()) { const ob = observe(book, tick); for (const o of ob.crossed) note(`filled ${o.side} [${o.lower},${o.lower + (o.w ?? 1)}) #${o.id}: held in place as its own exit`);
+      for (const o of ob.returned) note(`round trip ${o.rounds} done: ${o.side} [${o.lower},${o.lower + (o.w ?? 1)}) #${o.id} back to its start asset`); if (ob.crossed.length + ob.returned.length) save(); }
     const nowLive = WANT_LIVE && act && !pau;
     if (nowLive !== live) { note(`mode ${nowLive ? 'LIVE' : 'DRY RUN'} (MONAF_MAKER_LIVE=${WANT_LIVE ? 1 : 0} active=${act} paused=${pau})`); live = nowLive; }
     if (!isLeader()) { waiting = 'standby (lease held elsewhere)'; return; } // status/heartbeat still written
@@ -148,15 +157,15 @@ async function onBlock(n: bigint) {
         if (ev) { const c = (ev.find(e => e.eventName === 'Closed') as any).args; ret = { mon: Number(c.mon) / 1e18, weth: Number(c.weth) / 1e18 }; }
         else { const conv = o.kind === 'exit' ? a.why === 'fill' : !!o.crossed; const v = conv ? proceeds(o) : o.amt; ret = ((o.side === 'ask') === conv) ? { mon: 0, weth: v } : { mon: v, weth: 0 }; }
         const n0 = book.trips.length; applyClose(book, o, a.why, tick, ret, Date.now()); save();
-        note(`close ${a.why} ${o.kind} ${o.side} [${o.lower},${o.lower + 1}) #${o.id} -> ${ret.mon.toPrecision(6)} MON + ${ret.weth.toPrecision(6)} WETH${book.trips.length > n0 ? ` | trip pnl ${book.trips.at(-1)!.pnlMon.toFixed(4)} MON before gas (${book.trips.at(-1)!.rounds} rounds)` : ''}`);
+        note(`close ${a.why} ${o.kind} ${o.side} [${o.lower},${o.lower + (o.w ?? 1)}) #${o.id} -> ${ret.mon.toPrecision(6)} MON + ${ret.weth.toPrecision(6)} WETH${book.trips.length > n0 ? ` | trip pnl ${book.trips.at(-1)!.pnlMon.toFixed(4)} MON before gas (${book.trips.at(-1)!.rounds} rounds)` : ''}`);
       } else {
         const amt = a.amt; if (!(amt > 0)) continue;
-        const wei = BigInt(Math.floor(amt * 1e18)), liq = liquidityFor(a.side, a.lower, wei);
+        const wei = BigInt(Math.floor(amt * 1e18)), liq = liquidityFor(a.side, a.lower, wei, a.w ?? 1);
         const ev = await send('place', [a.lower, liq, wei, dl()], a.side, tick);
         const pl = ev ? (ev.find(e => e.eventName === 'Placed') as any).args : null;
-        const id = pl ? String(pl.tokenId) : `dry${dryId++}`, minted = amountFor(a.side, a.lower, pl ? pl.liquidity : liq); // book the MINTED amount, not amountMax
+        const id = pl ? String(pl.tokenId) : `dry${dryId++}`, minted = amountFor(a.side, a.lower, pl ? pl.liquidity : liq, a.w ?? 1); // book the MINTED amount, not amountMax
         applyPlace(book, a, id, minted, Date.now(), tick); save();
-        note(`place ${a.kind} ${a.side} ${minted.toPrecision(6)} ${a.side === 'ask' ? 'MON' : 'WETH'} (max ${amt.toPrecision(6)}) [${a.lower},${a.lower + 1}) #${id}`);
+        note(`place ${a.kind} ${a.side} ${minted.toPrecision(6)} ${a.side === 'ask' ? 'MON' : 'WETH'} (max ${amt.toPrecision(6)}) [${a.lower},${a.lower + (a.w ?? 1)}) #${id}`);
       }
     }
   } catch (e) { note(`error ${redact(e)}`); } finally { busy = false; busySince = 0; }
@@ -166,7 +175,7 @@ async function onBlock(n: bigint) {
 async function runBatch(acts: ReturnType<typeof plan>) {
   const closes = acts.filter(a => a.do === 'close') as Extract<ReturnType<typeof plan>[number], { do: 'close' }>[];
   const places = (acts.filter(a => a.do === 'place') as Extract<ReturnType<typeof plan>[number], { do: 'place' }>[]).filter(a => a.amt > 0);
-  const orders = places.map(a => { const wei = BigInt(Math.floor(a.amt * 1e18)); return { tickLower: a.lower, liquidity: liquidityFor(a.side, a.lower, wei), amountMax: wei }; });
+  const orders = places.map(a => { const wei = BigInt(Math.floor(a.amt * 1e18)); return { tickLower: a.lower, liquidity: liquidityFor(a.side, a.lower, wei, a.w ?? 1), amountMax: wei }; });
   const kinds = [...closes.map(() => 'close' as const), ...places.map(a => a.side)];
   const ev = await send('execute', [closes.map(a => BigInt(a.o.id)), orders, dl()], kinds, places.length ? tick : undefined);
   if (!ev) return;
@@ -175,8 +184,8 @@ async function runBatch(acts: ReturnType<typeof plan>) {
     applyClose(book, a.o as Ord, a.why, tick, ret, Date.now()); save(); note(`batch close ${a.why} ${a.o.kind} ${a.o.side} #${a.o.id} -> ${ret.mon.toPrecision(6)} MON + ${ret.weth.toPrecision(6)} WETH`);
   }
   const placed = ev.filter(e => e.eventName === 'Placed').map(e => (e as any).args);
-  places.forEach((a, i) => { const pl = placed[i]; const minted = amountFor(a.side, a.lower, pl.liquidity); applyPlace(book, a, String(pl.tokenId), minted, Date.now(), tick); save();
-    note(`batch place ${a.kind} ${a.side} ${minted.toPrecision(6)} ${a.side === 'ask' ? 'MON' : 'WETH'} [${a.lower},${a.lower + 1}) #${pl.tokenId}`); });
+  places.forEach((a, i) => { const pl = placed[i]; const minted = amountFor(a.side, a.lower, pl.liquidity, a.w ?? 1); applyPlace(book, a, String(pl.tokenId), minted, Date.now(), tick); save();
+    note(`batch place ${a.kind} ${a.side} ${minted.toPrecision(6)} ${a.side === 'ask' ? 'MON' : 'WETH'} [${a.lower},${a.lower + (a.w ?? 1)}) #${pl.tokenId}`); });
 }
 
 const wss = process.env.QN_WSS;
@@ -204,7 +213,7 @@ note(`maker keeper v4${V5 ? ' (vault V5: snapshot + batched execute)' : ''} ${WA
 // leader lease (box <-> GitHub Actions); the lease carries the open book so a takeover continues the same positions
 const leaseHooks = {
   note,
-  snapshot: () => ({ orders: book.orders, sidePaused: book.sidePaused, halted: '', day: st.day, dayPnl: st.dayPnl, dayGas: st.dayGas }),
+  snapshot: () => ({ cfg: { geo: TUN.geo, recentreTicks: TUN.recentreTicks, recentreMin: TUN.recentreMs / 60_000, size: [STRATEGY.sizeMinMonEq, STRATEGY.sizeMonEq] }, orders: book.orders, sidePaused: book.sidePaused, halted: '', day: st.day, dayPnl: st.dayPnl, dayGas: st.dayGas }),
   adopt: (b: any, from: string) => { if (!b || !Array.isArray(b.orders) || b.orders.some((o: Ord) => String(o.id).startsWith('dry'))) return; book.orders = b.orders.map(migrateOrder); book.sidePaused = b.sidePaused ?? book.sidePaused;
     if (b.day === st.day || !st.day) { st.day = b.day; st.dayPnl = b.dayPnl ?? st.dayPnl; st.dayGas = b.dayGas ?? st.dayGas; } needReconcile = true; save(); note(`lease: adopted book from ${from} (${book.orders.length} open)`); },
 };

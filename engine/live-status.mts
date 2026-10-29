@@ -114,10 +114,10 @@ async function once() {
   const bookById = new Map<string, any>(((ls as any)?.book?.orders ?? []).map((o: any) => [String(o.id), o]));
   const orders = await Promise.all(ids.map(async id => {
     const L = Number(await c.readContract({ address: V4.positionManager as Address, abi: pmAbi, functionName: 'getPositionLiquidity', args: [id], blockNumber: head }));
-    const b = bookById.get(String(id)); const lo = b?.lower ?? null; const a = lo === null ? null : amounts(L, lo, lo + 1, sp);
+    const b = bookById.get(String(id)); const lo = b?.lower ?? null, w = b?.w ?? 1; const a = lo === null ? null : amounts(L, lo, lo + w, sp);
     const side = b?.side ?? '?'; const wantMon = side === 'ask'; // ask = MON->WETH (fills when price rises above the range)
     const fill = a ? (side === 'ask' ? a.weth * monPerWeth / (a.mon + a.weth * monPerWeth || 1) : a.mon / (a.mon + a.weth * monPerWeth || 1)) : null;
-    return { id: String(id), side, kind: b?.kind ?? '?', range: lo === null ? null : [lo, lo + 1], ticksFromSpot: lo === null ? null : lo - Number(tick), mon: a?.mon ?? null, weth: a?.weth ?? null,
+    return { id: String(id), side, kind: b?.kind ?? '?', range: lo === null ? null : [lo, lo + w], widthTicks: lo === null ? null : w, ticksFromSpot: lo === null ? null : (lo > Number(tick) ? lo - Number(tick) : lo + w <= Number(tick) ? lo + w - Number(tick) : 0), trades: b ? ((b.kind === 'fresh' && b.crossed) ? (side === 'ask' ? 'bid' : 'ask') : side) : '?', mon: a?.mon ?? null, weth: a?.weth ?? null,
       valueMon: a ? a.mon + a.weth * monPerWeth : null, fillPct: fill === null ? null : Math.round(fill * 1000) / 10, heldAsExit: !!b?.crossed, placedAt: b?.placedAt ? new Date(b.placedAt).toISOString() : null, startAsset: wantMon ? 'MON' : 'WETH', startAmt: b?.startAmt ?? null };
   }));
   const idleMon = Number(monW) / 1e18, idleWeth = Number(wethW) / 1e18;
@@ -132,6 +132,7 @@ async function once() {
   if (lAge === null || lAge > 180) alerts.push(`KEEPER SILENT: lease not renewed for ${lAge ?? '?'} s (> 180 s)`);
   const unknown = orders.filter(o => o.valueMon === null).length;
   if (unknown) alerts.push(`valuation incomplete: ${unknown} order(s) not yet in the lease book (just placed); totals and P&L exclude them until the next refresh`);
+  for (const d of ['ask', 'bid']) { const n = orders.filter(o => o.trades === d).length; if (n > 1) alerts.push(`${n} resting ${d}-direction orders (Phase 1 rule: exactly one per side; the keeper closes extras in its next batch)`); }
   if (!active) alerts.push('vault inactive'); if (paused) alerts.push('vault paused by owner');
   const recentFails = keeperActs.filter(a => !a.ok && Date.now() - Date.parse(a.t) < 6 * 3600e3); if (recentFails.length) alerts.push(`${recentFails.length} reverted keeper tx(s) in the last 6 h`);
   const s = {
@@ -140,6 +141,7 @@ async function once() {
     funding: { netMon: fundMon, netWeth: fundWeth, valueAtSpotMon: fundValueNow, flows },
     pnl: { vsFundingAtSpotMon: valueMon - fundValueNow, partial: unknown > 0, note: 'vault value now minus the net owner deposits (1,100 MON + 0.0098 WETH at 17:43 UTC plus any later deposits or withdrawals), all at current pool spot (= P&L vs simply holding); includes gas already paid' },
     gas: { sinceFundingMon: gasSince, todayUtcMon: gasToday, keeperDayGasMon: (ls as any)?.book?.dayGas ?? null, txsSinceFunding: keeperActs.length, revertsSinceFunding: keeperActs.filter(a => !a.ok).length },
+    config: (ls as any)?.book?.cfg ?? null,
     keeperDay: (ls as any)?.book ? { day: (ls as any).book.day, dayPnlMon: (ls as any).book.dayPnl, sidePaused: (ls as any).book.sidePaused } : null,
     leader: ls ? { holder: (ls as any).holder, role: (ls as any).role, released: (ls as any).released, leaseAgeS: lAge, healthy: lAge !== null && lAge <= 60 && !(ls as any).released, error: (ls as any).error } : null,
     standby: 'box copy polls the lease every 5 s and takes over if it is > 60 s stale', runs: rn, lastKeeperTx: lastAct,
