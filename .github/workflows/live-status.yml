@@ -1,0 +1,45 @@
+name: Live status (read-only, gas-free)
+# Publishes site/index.html + status.json to the gh-pages branch (GitHub Pages) every 60 s; the publisher refreshes status.json every 30 s.
+# READ-ONLY: no signing key, sends no transactions, only READS the lease comment. It runs in its own job and concurrency group,
+# so it can never block or stall the keeper. The keeper workflow dispatches this one at start, and the 5-min cron restarts it if it dies.
+# SECURITY: schedule + workflow_dispatch triggers ONLY.
+on:
+  schedule: [{cron: "*/5 * * * *"}]
+  workflow_dispatch:
+permissions: {}
+concurrency: {group: live-status, cancel-in-progress: false}
+jobs:
+  publish:
+    if: github.repository == 'Blockchains/monaf-keeper' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 358
+    permissions: {contents: write, issues: read, actions: write}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with: {persist-credentials: false}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with: {node-version: 22}
+      - name: Install (lockfile, no scripts)
+        run: npm ci --ignore-scripts --no-audit --no-fund --loglevel=error >/dev/null
+      - name: Publish loop (~5h50m)
+        env:
+          QN_HTTP: ${{ secrets.MONAD_RPC_URL }}
+          GH_TOKEN: ${{ github.token }}
+          LEASE_COMMENT_ID: ${{ vars.LEASE_COMMENT_ID }}
+          LEASE_REPO: ${{ github.repository }}
+        run: |
+          if [ -n "$QN_HTTP" ]; then echo "::add-mask::$QN_HTTP"; for p in $(printf '%s' "$QN_HTTP" | sed -E 's#^[a-z]+://##' | tr '/?&=' '    '); do [ ${#p} -ge 8 ] && echo "::add-mask::$p"; done; fi
+          mkdir -p out && cp site/index.html site/.nojekyll out/
+          curl -sf "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/gh-pages/status.json" -o prev.json || echo '{}' > prev.json
+          export OUT_DIR=out PREV=prev.json TICK_S=30 RUN_FOR_S=20900
+          (node --experimental-strip-types --no-warnings engine/live-status.mts 2>&1 | sed -uE 's#(https?|wss?)://[^ "]+#<rpc>#g') &
+          end=$(( $(date +%s) + 20950 ))
+          git config --global user.name "monaf-status-bot"; git config --global user.email "monaf-status-bot@users.noreply.github.com"
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          while [ $(date +%s) -lt $end ]; do
+            sleep 60
+            [ -s out/status.json ] || continue
+            rm -rf pub && cp -r out pub && cd pub && git init -q -b gh-pages && git add -A && git commit -qm "status $(date -u +%FT%TZ)" \
+              && (git push -qf "$remote" gh-pages 2>&1 | sed -E 's#https://[^ ]+#<remote>#g' || true); cd ..
+          done
+          gh workflow run live-status.yml --ref main -R "$GITHUB_REPOSITORY" 2>/dev/null || echo "re-dispatch needs actions:write; cron restarts within 5 min"

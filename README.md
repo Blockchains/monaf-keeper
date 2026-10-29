@@ -15,3 +15,6 @@ Configuration comes only from repository secrets (`MAKER_KEEPER_PK`, `MONAD_RPC_
 the workflow (it has no PR triggers).
 
 License: MIT.
+
+## Live status page
+https://blockchains.github.io/monaf-keeper/ is read-only and gas-free. `engine/live-status.mts` runs in its own workflow (`live-status.yml`), separate from the keeper. It reads the vault snapshot, the v4 positions, the vault events, the keeper nonce (which also catches reverted txs) and the lease comment. It writes `status.json` every 30 s and pushes it to `gh-pages` every 60 s. The page reloads every 15 s and shows a red alert if the keeper's lease is more than 3 min old.

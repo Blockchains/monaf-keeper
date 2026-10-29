@@ -1,0 +1,40 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>monaf maker vault: live status</title>
+<style>body{font:14px/1.45 system-ui,sans-serif;margin:16px;max-width:1100px;background:#0d1117;color:#e6edf3}a{color:#58a6ff}table{border-collapse:collapse;width:100%;margin:6px 0 14px}td,th{border-bottom:1px solid #30363d;padding:4px 6px;text-align:left;font-variant-numeric:tabular-nums}
+.alert{background:#5a1d1d;border:1px solid #f85149;padding:8px 10px;margin:8px 0;font-weight:600}.ok{background:#12361f;border:1px solid #2ea043;padding:8px 10px;margin:8px 0}.k{color:#8b949e}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}.card{border:1px solid #30363d;padding:8px;border-radius:6px}.big{font-size:20px;font-weight:600}.neg{color:#f85149}.pos{color:#3fb950}</style></head>
+<body><h2>monaf maker vault: live status</h2>
+<div class="k">Read-only page. It sends no transactions and has no keys. It reloads status.json every 15 s, and the publisher writes status.json every 30 s. It also reads the live tick from the public Monad RPC.</div>
+<div id="alerts"></div><div id="main">loading…</div>
+<script>
+const f=(x,d=4)=>x==null?'–':Number(x).toLocaleString(undefined,{maximumFractionDigits:d});
+const tx=h=>`<a href="https://monadscan.com/tx/${h}" target="_blank">${h.slice(0,10)}…</a>`;
+const ago=t=>Math.round((Date.now()-Date.parse(t))/1000);
+async function liveTick(v){try{const r=await fetch('https://rpc.monad.xyz',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:v,data:'0x9711715a'},'latest']})});const j=await r.json();const w=j.result.slice(2);let t=BigInt('0x'+w.slice(128,192));if(t>(1n<<255n))t-=1n<<256n;return Number(t)}catch{return null}}
+async function load(){
+ let s;try{s=await (await fetch('status.json?t='+Date.now(),{cache:'no-store'})).json()}catch(e){document.getElementById('alerts').innerHTML='<div class="alert">status.json could not be loaded</div>';return}
+ const age=ago(s.at),lt=await liveTick(s.vault);const al=[...s.alerts];
+ if(age>180)al.unshift(`STATUS SILENT: last update ${age} s ago (> 180 s)`);
+ if(s.leader&&s.leader.leaseAgeS!=null&&s.leader.leaseAgeS+age>180)al.unshift(`KEEPER SILENT > 3 min: lease last renewed ${s.leader.leaseAgeS+age} s ago`);
+ document.getElementById('alerts').innerHTML=al.length?al.map(a=>`<div class="alert">⚠ ${a}</div>`).join(''):'<div class="ok">Keeper alive: lease fresh, no alerts</div>';
+ const p=s.pnl.vsFundingAtSpotMon;
+ document.getElementById('main').innerHTML=`
+ <div class="grid">
+ <div class="card"><div class="k">Vault value (MON at spot)</div><div class="big">${f(s.totals.valueMon,2)}</div></div>
+ <div class="card"><div class="k">P&L vs funding (1,100 MON + 0.0098 WETH at spot)</div><div class="big ${p<0?'neg':'pos'}">${f(p,3)} MON</div></div>
+ <div class="card"><div class="k">Spot</div><div class="big">${f(s.spotMonPerWeth,1)} MON/WETH</div><div class="k">tick ${s.tick}${lt!=null?` · live tick ${lt}`:''}</div></div>
+ <div class="card"><div class="k">Keeper gas (UTC today, on-chain since funding)</div><div class="big">${f(s.gas.todayUtcMon,4)} MON</div><div class="k">${s.gas.txsSinceFunding} txs, ${s.gas.revertsSinceFunding} reverted · keeper's own day counter ${f(s.gas.keeperDayGasMon,3)} MON</div></div>
+ <div class="card"><div class="k">Leader</div><div class="big">${s.leader?(s.leader.healthy?'healthy':'UNHEALTHY'):'–'}</div><div class="k">${s.leader?`${s.leader.holder} (${s.leader.role}) · lease ${s.leader.leaseAgeS} s old`:''}<br>Standby: ${s.standby}</div></div>
+ <div class="card"><div class="k">Last update</div><div class="big">${age} s ago</div><div class="k">${s.at} · block ${s.block}</div></div>
+ </div>
+ <h3>Inventory</h3><table><tr><th></th><th>MON</th><th>WETH</th></tr>
+ <tr><td>Idle in vault</td><td>${f(s.idle.mon)}</td><td>${f(s.idle.weth,7)}</td></tr>
+ <tr><td>Total incl. orders</td><td>${f(s.totals.mon)}</td><td>${f(s.totals.weth,7)}</td></tr></table>
+ <h3>Open orders</h3><table><tr><th>id</th><th>side</th><th>range (ticks)</th><th>vs spot</th><th>MON</th><th>WETH</th><th>value MON</th><th>filled</th><th>state</th></tr>
+ ${s.orders.map(o=>`<tr><td>${o.id}</td><td>${o.side}</td><td>${o.range?o.range.join(' → '):'?'}</td><td>${o.ticksFromSpot>0?'+':''}${o.ticksFromSpot} ticks</td><td>${f(o.mon)}</td><td>${f(o.weth,7)}</td><td>${f(o.valueMon,2)}</td><td>${f(o.fillPct,1)}%</td><td>${o.heldAsExit?'filled, held as exit':o.fillPct>=100?'filled':o.fillPct>0?'partly filled':'waiting'}</td></tr>`).join('')||'<tr><td colspan=9>none</td></tr>'}</table>
+ ${s.keeperDay?`<div class="k">Keeper day ${s.keeperDay.day}: realised P&L ${f(s.keeperDay.dayPnlMon,3)} MON · side paused: ask ${s.keeperDay.sidePaused?.ask}, bid ${s.keeperDay.sidePaused?.bid}</div>`:''}
+ <h3>Last 20 keeper actions</h3><table><tr><th>time (UTC)</th><th>kind</th><th>gas MON</th><th>tx</th><th>detail</th></tr>
+ ${s.actions.map(a=>`<tr><td>${a.t.replace('T',' ').slice(0,19)}</td><td class="${a.ok?'':'neg'}">${a.kind}</td><td>${f(a.gasMon,5)}</td><td>${tx(a.tx)}</td><td>${a.detail}</td></tr>`).join('')}</table>
+ <h3>Keeper workflow runs</h3><table>${(s.runs||[]).map(r=>`<tr><td><a href="${r.url}">${r.id}</a></td><td>${r.status}</td><td>${r.conclusion??''}</td><td>${r.created}</td></tr>`).join('')}</table>`;
+}
+load();setInterval(load,15000);
+</script></body></html>

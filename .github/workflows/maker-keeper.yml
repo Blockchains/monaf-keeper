@@ -22,6 +22,10 @@ jobs:
         with: {node-version: 22}
       - name: Install (lockfile, no scripts)
         run: npm ci --ignore-scripts --no-audit --no-fund --loglevel=error >/dev/null
+      - name: Kick the live status publisher (read-only, separate job; never blocks the keeper)
+        env: {GH_TOKEN: "${{ github.token }}", GH_REPO: "${{ github.repository }}"}
+        run: 'gh run list -w live-status.yml -s in_progress -L 1 --json databaseId -q ".[0].databaseId" | grep -q . || gh workflow run live-status.yml --ref main || true'
+        continue-on-error: true
       - name: Run keeper (~5h50m) then hand off
         env:
           MAKER_KEEPER_KEY: ${{ secrets.MAKER_KEEPER_PK }}
