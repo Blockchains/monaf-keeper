@@ -27,7 +27,7 @@ jobs:
           MAKER_KEEPER_KEY: ${{ secrets.MAKER_KEEPER_PK }}
           QN_HTTP: ${{ secrets.MONAD_RPC_URL }}
           QN_WSS: ${{ secrets.MONAD_WSS_URL }}
-          VAULT: "0x760Fab1796480368Fed4084ae1a01491577A2180"
+          VAULT: "0x1fEE5da5FEDa2656163a593Af70b84325B8e2958"
           MONAF_MAKER_LIVE: "1"
           GH_TOKEN: ${{ github.token }}
           LEASE_REPO: ${{ github.repository }}
