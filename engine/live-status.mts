@@ -5,7 +5,7 @@
  * env: QN_HTTP (optional, read-only RPC secret; falls back to the public RPC), GH_TOKEN + LEASE_COMMENT_ID (lease read),
  *      OUT_DIR, PREV (previous status.json for incremental action history), RUN_FOR_S, TICK_S.
  */
-import { createPublicClient, http, parseAbi, decodeEventLog, type Address } from 'viem';
+import { createPublicClient, http, parseAbi, decodeEventLog, decodeFunctionData, type Address } from 'viem';
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { V4 } from './maker-v4-lib.mts';
 
@@ -28,7 +28,15 @@ function amounts(L: number, lo: number, hi: number, sp: number) {
 type Act = { t: string; block: string; tx: string; kind: string; ok: boolean; gasMon: number; detail: string };
 let prev: any = {}; try { if (process.env.PREV && existsSync(process.env.PREV)) prev = JSON.parse(readFileSync(process.env.PREV, 'utf8')); } catch {}
 let actions: Act[] = Array.isArray(prev.allActions) ? prev.allActions : [];
-let scanned = BigInt(prev.scannedBlock ?? FUND.block - 1n), seenNonce = Number(prev.seenNonce ?? FUND.nonce);
+let scanned = BigInt(Array.isArray(prev.flows) ? (prev.scannedBlock ?? FUND.block - 1n) : FUND.block - 1n), seenNonce = Number(prev.seenNonce ?? FUND.nonce);
+const OWNER = (process.env.OWNER ?? '0x9A4382E8C662B827cf38A1f18cb5fa07ce61Ac1F') as Address, WETH = V4.weth as Address;
+/** owner deposits / withdrawals after the first funding (signed: + into the vault). Native MON: owner txs to the vault (value, or
+ *  withdraw(address,uint256) calldata); WETH: Transfer logs owner <-> vault. Seeded with the first funding. */
+let flows: { t: string; tx: string; mon: number; weth: number }[] = Array.isArray(prev.flows) ? prev.flows : [{ t: FUND.at, tx: '0x48eb2bf721a80cd3287ca2a36d0595e132ed243e82ee5e86aa48350b61655b4f', mon: FUND.mon, weth: FUND.weth }];
+let ownerNonce = Number(prev.ownerNonce ?? -1);
+const tAbi = parseAbi(['event Transfer(address indexed from, address indexed to, uint256 value)']);
+const wAbi = parseAbi(['function withdraw(address to,uint256 amount)', 'function withdrawToken(address token,address to,uint256 amount)']);
+const addFlow = (f: { t: string; tx: string; mon: number; weth: number }) => { const e = flows.find(x => x.tx === f.tx); if (e) { e.mon = e.mon || f.mon; e.weth = e.weth || f.weth; } else flows.push(f); };
 const known = new Set(actions.map(a => a.tx));
 const blockTime = new Map<bigint, string>();
 async function tOf(b: bigint) { if (!blockTime.has(b)) blockTime.set(b, new Date(Number((await c.getBlock({ blockNumber: b })).timestamp) * 1000).toISOString()); return blockTime.get(b)!; }
@@ -53,6 +61,27 @@ async function scan(head: bigint) {
     const rs = await Promise.all(starts.slice(i, i + 6).map(b => c.getLogs({ address: VAULT, fromBlock: b, toBlock: b + CHUNK - 1n > head ? head : b + CHUNK - 1n })));
     for (const ls of rs) for (const l of ls) await addTx(l.transactionHash!);
   }
+  for (let i = 0; i < starts.length; i += 6) { // WETH owner <-> vault
+    const rs = await Promise.all(starts.slice(i, i + 6).flatMap(b => { const to = b + CHUNK - 1n > head ? head : b + CHUNK - 1n;
+      return [c.getLogs({ address: WETH, event: tAbi[0], args: { from: OWNER, to: VAULT }, fromBlock: b, toBlock: to }), c.getLogs({ address: WETH, event: tAbi[0], args: { from: VAULT, to: OWNER }, fromBlock: b, toBlock: to })]; }));
+    for (const ls of rs) for (const l of ls) { const inn = (l.args as any).to.toLowerCase() === VAULT.toLowerCase(); if (l.transactionHash === flows[0].tx) continue;
+      addFlow({ t: await tOf(l.blockNumber!), tx: l.transactionHash!, mon: 0, weth: (inn ? 1 : -1) * Number((l.args as any).value) / 1e18 }); }
+  }
+  const on = await c.getTransactionCount({ address: OWNER, blockNumber: head }); // owner native MON in/out via txs to the vault
+  if (ownerNonce < 0) ownerNonce = await c.getTransactionCount({ address: OWNER, blockNumber: FUND.block });
+  for (let k = ownerNonce + 1; k <= on; k++) {
+    let lo = scanned < FUND.block ? FUND.block : scanned, hi = head;
+    if (await c.getTransactionCount({ address: OWNER, blockNumber: lo }) >= k) continue;
+    while (hi - lo > 1n) { const m = (lo + hi) / 2n; if (await c.getTransactionCount({ address: OWNER, blockNumber: m }) >= k) hi = m; else lo = m; }
+    const blk = await c.getBlock({ blockNumber: hi, includeTransactions: true });
+    for (const tx of blk.transactions) if (typeof tx !== 'string' && tx.from.toLowerCase() === OWNER.toLowerCase() && tx.to?.toLowerCase() === VAULT.toLowerCase()) {
+      const r = await c.getTransactionReceipt({ hash: tx.hash }); if (r.status !== 'success' || tx.hash === flows[0].tx) continue;
+      let mon = Number(tx.value) / 1e18, weth = 0;
+      try { const d = decodeFunctionData({ abi: wAbi, data: tx.input }); if (d.functionName === 'withdraw') mon -= Number(d.args[1]) / 1e18; else if (String(d.args[0]).toLowerCase() === WETH.toLowerCase()) weth = -Number(d.args[2]) / 1e18; } catch {}
+      if (mon || weth) addFlow({ t: await tOf(hi), tx: tx.hash, mon, weth });
+    }
+  }
+  ownerNonce = on;
   const n = await c.getTransactionCount({ address: KEEPER, blockNumber: head });
   for (let k = seenNonce + 1; k <= n; k++) { // find the block where nonce reached k (tx with nonce k-1)
     let lo = scanned < FUND.block ? FUND.block : scanned, hi = head;
@@ -94,7 +123,7 @@ async function once() {
   const idleMon = Number(monW) / 1e18, idleWeth = Number(wethW) / 1e18;
   const ordMon = orders.reduce((s, o) => s + (o.mon ?? 0), 0), ordWeth = orders.reduce((s, o) => s + (o.weth ?? 0), 0);
   const totMon = idleMon + ordMon, totWeth = idleWeth + ordWeth, valueMon = totMon + totWeth * monPerWeth;
-  const fundValueNow = FUND.mon + FUND.weth * monPerWeth;
+  const fundMon = flows.reduce((a, f) => a + f.mon, 0), fundWeth = flows.reduce((a, f) => a + f.weth, 0), fundValueNow = fundMon + fundWeth * monPerWeth;
   const today = new Date().toISOString().slice(0, 10);
   const keeperActs = actions.filter(a => !a.kind.startsWith('owner'));
   const gasSince = keeperActs.reduce((s, a) => s + a.gasMon, 0), gasToday = keeperActs.filter(a => a.t.startsWith(today)).reduce((s, a) => s + a.gasMon, 0);
@@ -106,13 +135,13 @@ async function once() {
   const s = {
     at: new Date().toISOString(), block: String(head), vault: VAULT, keeper: KEEPER, active, paused, tick: Number(tick), spotMonPerWeth: monPerWeth, gasGwei: Number(gp) / 1e9,
     idle: { mon: idleMon, weth: idleWeth }, orders, totals: { mon: totMon, weth: totWeth, valueMon },
-    funding: { ...FUND, block: String(FUND.block), valueAtSpotMon: fundValueNow },
-    pnl: { vsFundingAtSpotMon: valueMon - fundValueNow, note: 'vault value now minus the funded 1,100 MON + 0.0098 WETH, both at current pool spot (= P&L vs simply holding); includes gas already paid' },
+    funding: { netMon: fundMon, netWeth: fundWeth, valueAtSpotMon: fundValueNow, flows },
+    pnl: { vsFundingAtSpotMon: valueMon - fundValueNow, note: 'vault value now minus the net owner deposits (1,100 MON + 0.0098 WETH at 17:43 UTC plus any later deposits or withdrawals), all at current pool spot (= P&L vs simply holding); includes gas already paid' },
     gas: { sinceFundingMon: gasSince, todayUtcMon: gasToday, keeperDayGasMon: (ls as any)?.book?.dayGas ?? null, txsSinceFunding: keeperActs.length, revertsSinceFunding: keeperActs.filter(a => !a.ok).length },
     keeperDay: (ls as any)?.book ? { day: (ls as any).book.day, dayPnlMon: (ls as any).book.dayPnl, sidePaused: (ls as any).book.sidePaused } : null,
     leader: ls ? { holder: (ls as any).holder, role: (ls as any).role, released: (ls as any).released, leaseAgeS: lAge, healthy: lAge !== null && lAge <= 60 && !(ls as any).released, error: (ls as any).error } : null,
     standby: 'box copy polls the lease every 5 s and takes over if it is > 60 s stale', runs: rn, lastKeeperTx: lastAct,
-    alerts, actions: actions.slice(-20).reverse(), allActions: actions, scannedBlock: String(scanned), seenNonce,
+    alerts, actions: actions.slice(-20).reverse(), allActions: actions, scannedBlock: String(scanned), seenNonce, ownerNonce,
   };
   writeFileSync(`${OUT}/status.json`, JSON.stringify(s, null, 1));
   return s;

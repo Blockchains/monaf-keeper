@@ -1,5 +1,5 @@
 import { test } from 'node:test'; import assert from 'node:assert/strict';
-import { newBook, plan, observe, applyClose, applyPlace, filled, unfilled, rangeFor, exitLower, proceeds, liquidityFor, amountFor, migrateOrder, mtm, freshSize, worthIt, tripGasMon, gasLimit, tipGwei, reconcile, STRATEGY, V4, px, type Book } from './maker-v4-lib.mts';
+import { newBook, plan, observe, applyClose, applyPlace, filled, unfilled, rangeFor, exitLower, proceeds, liquidityFor, amountFor, migrateOrder, mtm, freshSize, worthIt, tripGasMon, gasLimit, tipGwei, reconcile, rollDay, STRATEGY, V4, px, type Book } from './maker-v4-lib.mts';
 const MIN = 60_000;
 /** model executor: observe + plan + apply (the keeper's dry-run semantics) */
 const run = (b: Book, tick: number, now: number, inv?: { mon: number; weth: number }, gasGwei?: number) => { observe(b, tick); const acts = plan(b, tick, now, { gas: true, fresh: true, gasGwei }, inv);
@@ -91,4 +91,29 @@ test('legacy exits close on a full fill and count against the vault maxOpen; rec
   let a = plan(b, 0, 0, { gas: true, fresh: true }); assert.equal(a.filter(x => x.do === 'place').length, 1);    // 3 legacy + 1 = vault max 4
   a = plan(b, -21, 0, { gas: true, fresh: true }); assert.deepEqual(a.filter(x => x.do === 'close').map((x: any) => x.o.id), ['1']); assert.equal(a.filter(x => x.do === 'place').length, 2);
   const r = reconcile(b, ['2', '3', '9']); assert.deepEqual(r.orphans, ['9']); assert.deepEqual(b.sidePaused, { ask: false, bid: false });
+});
+test('deploy idle: new idle WETH on a side held by a filled exit gets ONE new unfilled order; unfilled orders top up only when >= 1.5x and >= +100 MON-eq; old rule with deployIdle=false', () => {
+  const T = -116700, P = 1 / px(T); const ok = { gas: true, fresh: true };
+  const b = newBook(); applyPlace(b, { do: 'place', kind: 'fresh', side: 'bid', lower: T + 100, amt: 0.0088 }, 'held', 0.0088, 0, T); b.orders[0].crossed = true;
+  applyPlace(b, { do: 'place', kind: 'fresh', side: 'ask', lower: T + 1, amt: 372 }, 'ask', 372, 0, T); observe(b, T);
+  const inv = { mon: 727, weth: 0.0108 };
+  const a = plan(b, T, 99 * MIN, ok, inv);
+  const bid = a.find(x => x.do === 'place' && x.side === 'bid') as any; assert.ok(bid, 'new bid from idle WETH'); assert.ok(bid.amt > 0.008 && bid.amt <= 0.0108 * STRATEGY.bidInvFrac); // capped at 1,000 MON-eq
+  assert.ok(!a.some(x => x.do === 'close' && x.o.id === 'held'), 'filled exit never moved');
+  // ask: want = min(1000, (727+372)*0.45=494.6) < 1.5*372 -> no pointless resize
+  assert.ok(!a.some(x => x.do === 'close' && x.o.id === 'ask'));
+  // big MON deposit: ask resized in the same plan (close + place)
+  const a2 = plan(b, T, 99 * MIN, ok, { mon: 3000, weth: 0 });
+  assert.ok(a2.some(x => x.do === 'close' && x.o.id === 'ask')); const ask2 = a2.find(x => x.do === 'place' && x.side === 'ask') as any; assert.ok(ask2 && ask2.amt === STRATEGY.sizeMonEq, JSON.stringify(a2.map((x: any) => [x.do, x.side ?? x.o?.side, x.amt])));
+  assert.ok(!plan(b, T, 99 * MIN, ok, inv, { deployIdle: false }).some(x => x.do === 'place' && x.side === 'bid'), 'old pause-when-full rule');
+  void P;
+});
+test('daily loss resumes the next UTC day even while a held exit is still under water (MTM baseline per day)', () => {
+  const T = -116700; const b: any = newBook(); b.day = '2026-10-29';
+  applyPlace(b, { do: 'place', kind: 'fresh', side: 'bid', lower: T + 400, amt: 0.0088 }, 'held', 0.0088, 0, T + 401); b.orders[0].crossed = true; b.dayMtm0 = 0;
+  const ok = { gas: true, fresh: true };
+  assert.equal(plan(b, T, 99 * MIN, ok, { mon: 0, weth: 0.0098 }).length, 0, 'halted today (MTM ~ -40 < -25)');
+  rollDay(b, Date.parse('2026-10-30T00:00:01Z'));
+  assert.ok(plan(b, T, 99 * MIN, ok, { mon: 0, weth: 0.0098 }).some((x: any) => x.do === 'place' && x.side === 'bid'), 'resumes next day');
+  assert.ok(plan(b, T - 300, 99 * MIN, ok, { mon: 0, weth: 0.0098 }).length === 0, 'a NEW -25 MON move the next day halts again');
 });

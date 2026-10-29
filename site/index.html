@@ -19,7 +19,7 @@ async function load(){
  document.getElementById('main').innerHTML=`
  <div class="grid">
  <div class="card"><div class="k">Vault value (MON at spot)</div><div class="big">${f(s.totals.valueMon,2)}</div></div>
- <div class="card"><div class="k">P&L vs funding (1,100 MON + 0.0098 WETH at spot)</div><div class="big ${p<0?'neg':'pos'}">${f(p,3)} MON</div></div>
+ <div class="card"><div class="k">P&L vs net deposits (${f(s.funding.netMon,2)} MON + ${f(s.funding.netWeth,5)} WETH at spot)</div><div class="big ${p<0?'neg':'pos'}">${f(p,3)} MON</div></div>
  <div class="card"><div class="k">Spot</div><div class="big">${f(s.spotMonPerWeth,1)} MON/WETH</div><div class="k">tick ${s.tick}${lt!=null?` · live tick ${lt}`:''}</div></div>
  <div class="card"><div class="k">Keeper gas (UTC today, on-chain since funding)</div><div class="big">${f(s.gas.todayUtcMon,4)} MON</div><div class="k">${s.gas.txsSinceFunding} txs, ${s.gas.revertsSinceFunding} reverted · keeper's own day counter ${f(s.gas.keeperDayGasMon,3)} MON</div></div>
  <div class="card"><div class="k">Leader</div><div class="big">${s.leader?(s.leader.healthy?'healthy':'UNHEALTHY'):'–'}</div><div class="k">${s.leader?`${s.leader.holder} (${s.leader.role}) · lease ${s.leader.leaseAgeS} s old`:''}<br>Standby: ${s.standby}</div></div>

@@ -100,8 +100,10 @@ export function freshSize(side: Side, tick: number, inv?: { mon: number; weth: n
 export const utcDay = (now: number) => new Date(now).toISOString().slice(0, 10);
 export const nextUtcDay = (now: number) => new Date(Math.floor(now / 86_400_000 + 1) * 86_400_000).toISOString();
 /** Roll the per-day counters at a UTC day change (clears a daily-loss wait). Returns true if it rolled. */
-export function rollDay(b: Book & { day?: string }, now: number): boolean { const d = utcDay(now); if (b.day === d) return false; b.day = d; b.dayPnl = 0; b.dayGas = 0; if (b.halted?.startsWith('daily loss')) b.halted = ''; return true; }
-export const dayLoss = (b: Book, tick: number) => b.dayPnl + mtm(b, tick) - b.dayGas;
+export function rollDay(b: Book & { day?: string }, now: number): boolean { const d = utcDay(now); if (b.day === d) return false; b.day = d; b.dayPnl = 0; b.dayGas = 0; (b as any).dayMtm0 = undefined; if (b.halted?.startsWith('daily loss')) b.halted = ''; return true; }
+/** Daily loss = realised today + the CHANGE in open-order MTM since the day started - gas today. The MTM baseline is taken lazily at the first
+ *  check of the day, so a held exit that was already under water yesterday does not keep the guard closed forever (it resumes each UTC day). */
+export const dayLoss = (b: Book, tick: number) => { const m = mtm(b, tick), x = b as any; if (x.dayMtm0 === undefined || x.dayMtm0 === null) x.dayMtm0 = x.day ? m : 0; return b.dayPnl + m - x.dayMtm0 - b.dayGas; };
 /** Why no NEW orders right now ('' = trade). Never latches: stale clears on the next fresh block, loss at the next UTC day, gas when it drops. */
 export function waitReason(b: Book, tick: number, now: number, ok: { gas: boolean; fresh: boolean }): string {
   if (!ok.fresh) return 'stale data (waiting for fresh blocks)';
@@ -129,7 +131,7 @@ export function observe(b: Book, tick: number): { crossed: Ord[]; returned: Ord[
   }
   sideFull(b); return { crossed, returned };
 }
-export type Tunables = { recentreMs?: number; recentreTicks?: number };
+export type Tunables = { recentreMs?: number; recentreTicks?: number; deployIdle?: boolean };
 /**
  * Decide the next actions for one block (call observe() first). Caller executes them in order (live: vault txs, dry/replay: model) and calls apply*().
  * A filled order is NOT closed: the 1-tick range stays where it is and is now the exit, buying/selling back at exactly the fill price
@@ -144,12 +146,24 @@ export function plan(b: Book, tick: number, now: number, ok: { gas: boolean; fre
   for (const o of b.orders) if (o.kind === 'exit' && filled(o, tick)) { acts.push({ do: 'close', o, why: 'fill' }); closing.add(o.id); }
   if (!ok.gas || !ok.fresh) return acts;
   for (const o of b.orders) if (o.kind === 'fresh' && !o.crossed && unfilled(o, tick) && now - o.placedAt >= rMs && Math.abs(o.lower - rangeFor(o.side, tick)) > rT) { acts.push({ do: 'close', o, why: 'recentre' }); closing.add(o.id); }
-  const live = b.orders.filter(o => !closing.has(o.id)); let open = live.length, fresh = live.filter(o => o.kind === 'fresh').length;
+  // Deploy idle funds (every block: inv = this block's vault balances, so new deposits are picked up on the next block).
+  //  - top-up: an UNFILLED order whose fresh size (from today's idle + its own funds) is >= 1.5x and >= +100 MON-eq bigger is
+  //    closed and re-placed bigger in the SAME batched tx (no move otherwise: gas-saving).
+  //  - a side whose slot is held by a FILLED order (its own exit) may hold ONE more unfilled order from idle funds of that side.
+  const idle = tun.deployIdle ?? true;
+  if (idle && inv) for (const o of b.orders) if (o.kind === 'fresh' && !o.crossed && !closing.has(o.id) && unfilled(o, tick)) {
+    const want = freshSize(o.side, tick, { mon: inv.mon + (o.side === 'ask' ? o.amt : 0), weth: inv.weth + (o.side === 'bid' ? o.amt : 0) }, ok.gasGwei);
+    if (want >= o.amt * 1.5 && monEq(assetOf(o.side), want - o.amt, tick) >= 100) { acts.push({ do: 'close', o, why: 'recentre' }); closing.add(o.id); }
+  }
+  const live = b.orders.filter(o => !closing.has(o.id)); let open = live.length;
+  const pending = { mon: 0, weth: 0 }; for (const a of acts) if (a.do === 'close' && !a.o.crossed) (a.o.side === 'ask' ? (pending.mon += a.o.amt) : (pending.weth += a.o.amt)); // funds the closes return this tx
   for (const side of ['ask', 'bid'] as Side[]) {
-    if (live.some(o => o.kind === 'fresh' && o.side === side)) continue;   // one per side (a filled one holds its slot = pause-when-full)
-    if (open >= STRATEGY.maxOpen || fresh >= STRATEGY.maxFresh) continue;
-    const amt = freshSize(side, tick, inv, ok.gasGwei); if (!(amt > 0)) continue; // too small / not worth the gas: still place the other side
-    acts.push({ do: 'place', kind: 'fresh', side, lower: rangeFor(side, tick), amt }); open++; fresh++;
+    const mine = live.filter(o => o.kind === 'fresh' && o.side === side);
+    if (mine.some(o => !o.crossed)) continue;                    // at most one UNFILLED order per side
+    if (mine.length && !(idle && inv)) continue;                  // old rule (or no balances known): a filled one holds its slot (pause-when-full)
+    if (mine.length > 1 || open >= STRATEGY.maxOpen) continue;
+    const amt = freshSize(side, tick, inv && { mon: inv.mon + pending.mon, weth: inv.weth + pending.weth }, ok.gasGwei); if (!(amt > 0)) continue;
+    acts.push({ do: 'place', kind: 'fresh', side, lower: rangeFor(side, tick), amt }); open++;
   }
   return acts;
 }

@@ -44,7 +44,7 @@ const vaultAbi = parseAbi(['function place(int24 tickLower,uint128 liquidity,uin
 const book: Book = existsSync(BOOK) ? JSON.parse(readFileSync(BOOK, 'utf8')) : { ...newBook(), day: '', gasMon: 0 };
 book.orders.forEach(migrateOrder); // pre-fix book: amt/startAmt were amountMax (0.1% more than minted)
 const envNum = (k: string, d: number) => { const r = process.env[k], v = Number(r); return r !== undefined && r !== '' && Number.isFinite(v) ? v : d; };
-const TUN = { recentreTicks: envNum('MAKER_RECENTRE_TICKS', STRATEGY.recentreTicks), recentreMs: envNum('MAKER_RECENTRE_MIN', STRATEGY.recentreMs / 60_000) * 60_000 };
+const TUN = { recentreTicks: envNum('MAKER_RECENTRE_TICKS', STRATEGY.recentreTicks), recentreMs: envNum('MAKER_RECENTRE_MIN', STRATEGY.recentreMs / 60_000) * 60_000, deployIdle: process.env.MAKER_DEPLOY_IDLE !== '0' };
 const TIP_GWEI = tipGwei(envNum('MAKER_TIP_GWEI', STRATEGY.tipGwei), envNum('MAKER_MIN_TIP_GWEI', 0)), TIP = BigInt(Math.round(TIP_GWEI * 1e9));
 const st = book as Book & { day: string; gasMon: number };
 const save = () => writeFileSync(BOOK, JSON.stringify(book, null, 1));
@@ -203,9 +203,9 @@ note(`maker keeper v4${V5 ? ' (vault V5: snapshot + batched execute)' : ''} ${WA
 // leader lease (box <-> GitHub Actions); the lease carries the open book so a takeover continues the same positions
 const leaseHooks = {
   note,
-  snapshot: () => ({ orders: book.orders, sidePaused: book.sidePaused, halted: '', day: st.day, dayPnl: st.dayPnl, dayGas: st.dayGas }),
+  snapshot: () => ({ orders: book.orders, sidePaused: book.sidePaused, halted: '', day: st.day, dayPnl: st.dayPnl, dayGas: st.dayGas, dayMtm0: (st as any).dayMtm0 ?? null }),
   adopt: (b: any, from: string) => { if (!b || !Array.isArray(b.orders) || b.orders.some((o: Ord) => String(o.id).startsWith('dry'))) return; book.orders = b.orders.map(migrateOrder); book.sidePaused = b.sidePaused ?? book.sidePaused;
-    if (b.day === st.day || !st.day) { st.day = b.day; st.dayPnl = b.dayPnl ?? st.dayPnl; st.dayGas = b.dayGas ?? st.dayGas; } needReconcile = true; save(); note(`lease: adopted book from ${from} (${book.orders.length} open)`); },
+    if (b.day === st.day || !st.day) { st.day = b.day; st.dayPnl = b.dayPnl ?? st.dayPnl; st.dayGas = b.dayGas ?? st.dayGas; if (b.dayMtm0 !== undefined) (st as any).dayMtm0 = b.dayMtm0; } needReconcile = true; save(); note(`lease: adopted book from ${from} (${book.orders.length} open)`); },
 };
 if (WANT_LIVE) await startLease(leaseHooks); // dry runs never touch the shared lease
 const runFor = Number(process.env.RUN_FOR_S ?? 0); // Actions: graceful hand-off before the 6h job limit
