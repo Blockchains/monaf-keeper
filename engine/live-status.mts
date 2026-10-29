@@ -130,13 +130,15 @@ async function once() {
   const lAge = (ls as any)?.ageS ?? null, lastAct = keeperActs.at(-1)?.t ?? null;
   const alerts: string[] = [];
   if (lAge === null || lAge > 180) alerts.push(`KEEPER SILENT: lease not renewed for ${lAge ?? '?'} s (> 180 s)`);
+  const unknown = orders.filter(o => o.valueMon === null).length;
+  if (unknown) alerts.push(`valuation incomplete: ${unknown} order(s) not yet in the lease book (just placed); totals and P&L exclude them until the next refresh`);
   if (!active) alerts.push('vault inactive'); if (paused) alerts.push('vault paused by owner');
   const recentFails = keeperActs.filter(a => !a.ok && Date.now() - Date.parse(a.t) < 6 * 3600e3); if (recentFails.length) alerts.push(`${recentFails.length} reverted keeper tx(s) in the last 6 h`);
   const s = {
     at: new Date().toISOString(), block: String(head), vault: VAULT, keeper: KEEPER, active, paused, tick: Number(tick), spotMonPerWeth: monPerWeth, gasGwei: Number(gp) / 1e9,
     idle: { mon: idleMon, weth: idleWeth }, orders, totals: { mon: totMon, weth: totWeth, valueMon },
     funding: { netMon: fundMon, netWeth: fundWeth, valueAtSpotMon: fundValueNow, flows },
-    pnl: { vsFundingAtSpotMon: valueMon - fundValueNow, note: 'vault value now minus the net owner deposits (1,100 MON + 0.0098 WETH at 17:43 UTC plus any later deposits or withdrawals), all at current pool spot (= P&L vs simply holding); includes gas already paid' },
+    pnl: { vsFundingAtSpotMon: valueMon - fundValueNow, partial: unknown > 0, note: 'vault value now minus the net owner deposits (1,100 MON + 0.0098 WETH at 17:43 UTC plus any later deposits or withdrawals), all at current pool spot (= P&L vs simply holding); includes gas already paid' },
     gas: { sinceFundingMon: gasSince, todayUtcMon: gasToday, keeperDayGasMon: (ls as any)?.book?.dayGas ?? null, txsSinceFunding: keeperActs.length, revertsSinceFunding: keeperActs.filter(a => !a.ok).length },
     keeperDay: (ls as any)?.book ? { day: (ls as any).book.day, dayPnlMon: (ls as any).book.dayPnl, sidePaused: (ls as any).book.sidePaused } : null,
     leader: ls ? { holder: (ls as any).holder, role: (ls as any).role, released: (ls as any).released, leaseAgeS: lAge, healthy: lAge !== null && lAge <= 60 && !(ls as any).released, error: (ls as any).error } : null,
