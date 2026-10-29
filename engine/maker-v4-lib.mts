@@ -1,5 +1,5 @@
 // monaf v4 maker strategy (Uniswap v4 MON/WETH 0.05% tickSpacing 1). Pure logic shared by the keeper and the replay. No signing, no I/O.
-// HARD-CODED strategy (not env-tunable on purpose): see engine/MAKER-V4-RUNBOOK.md.
+// Strategy constants: see engine/MAKER-V4-RUNBOOK.md. Only the recentre tunables and the gas tip are env-overridable (keeper).
 export const V4 = {
   chainId: 143,
   poolManager: '0x188d586ddcf52439676ca21a244753fa19f9ea8e',
@@ -11,51 +11,90 @@ export const V4 = {
   fee: 0.0005, spacing: 1,
 } as const;
 export const STRATEGY = {
-  sizeMonEq: 1000,          // per side cap, MON-equivalent (actual size = min(cap, vault inventory share))
-  maxOpen: 4,               // live fresh + stuck exits (vault also enforces 4)
+  sizeMonEq: 1000,          // per order cap, MON-equivalent (actual size = min(cap, vault inventory share))
+  maxOpen: 4,               // vault limit: fresh orders + legacy exits
+  maxFresh: 2,              // at most one order per side
   maxDistanceTicks: 10,     // vault limit (keeper always uses adjacent ticks)
-  recentreMs: 5 * 60_000,   // unfilled fresh order re-centred after 5 min; exits never moved
+  recentreMs: 15 * 60_000,  // an UNFILLED order is re-centred only when >= 15 min old ...
+  recentreTicks: 3,         // ... AND more than 3 ticks from the adjacent tick. Filled orders (= their own exit) are never moved.
   gasCapGwei: 150,          // no new orders / re-centres above this
   staleNoNewS: 10,          // no new orders if last block older than this
   staleWarnS: 60,           // status warning only: the keeper NEVER pauses the vault on chain; stale data only means "wait", auto-resume on fresh blocks
-  dailyLossMon: 25,         // realised + open-exit MTM - gas: no NEW orders until the next UTC day (time-boxed, auto-resumes; fills still get their exits)
+  dailyLossMon: 25,         // realised + MTM - gas: no NEW orders until the next UTC day (time-boxed, auto-resumes)
   busyKillS: 120,           // one block's work stuck longer than this -> process exits, supervisor restarts it (never a silent stall)
-  askInvFrac: 0.45,         // fresh ask <= 45% of vault MON
-  bidInvFrac: 0.9,          // fresh bid <= 90% of vault WETH
-  minOrderMonEq: 5,         // skip a side below this (gas would eat the fees)
-  capMode: 'pause' as const // cap hit: pause the filled side, hold the asset, never market-recycle
+  askInvFrac: 0.45,         // ask <= 45% of vault MON
+  bidInvFrac: 0.9,          // bid <= 90% of vault WETH
+  minOrderMonEq: 5,         // hard floor
+  minProfitMult: 1.5,       // skip an order whose 2-leg fee (0.05% x 2) < 1.5x its round-trip gas
+  gasMult: 1.03,            // gas limit = estimate x 1.03 (Monad bills the LIMIT, not gas used)
+  gasFallback: { ask: 360_000, bid: 530_000, close: 270_000 }, // limit when estimateGas fails but eth_call succeeds
+  tipGwei: 0.5,             // priority tip (keeper clamps to [MAKER_MIN_TIP_GWEI, 1])
+  capMode: 'pause' as const // both sides filled: hold, never market-recycle
 };
 export type Side = 'ask' | 'bid'; // ask: sells MON in [t+1,t+2) above spot (MON only). bid: sells WETH in [t-1,t) below spot (WETH only).
-export type Ord = { id: string; kind: 'fresh' | 'exit'; side: Side; lower: number; amt: number; placedAt: number; startMonEq: number; startAsset: 'MON' | 'WETH'; startAmt: number };
+/** amt/startAmt = amount actually MINTED (not amountMax). crossed = fully converted right now; rounds = completed full round trips.
+ *  spare = idle remainder left in the vault by the old 0.1% haircut (legacy exits only, in the exit's asset). v = book schema. */
+export type Ord = { id: string; kind: 'fresh' | 'exit'; side: Side; lower: number; amt: number; placedAt: number; startMonEq: number; startAsset: 'MON' | 'WETH'; startAmt: number;
+  crossed?: boolean; rounds?: number; spare?: number; v?: number };
 export const px = (tick: number) => Math.pow(1.0001, tick);            // WETH per MON at tick
 export const monEq = (asset: 'MON' | 'WETH', x: number, tick: number) => asset === 'MON' ? x : x / px(tick);
+export const assetOf = (side: Side): 'MON' | 'WETH' => side === 'ask' ? 'MON' : 'WETH';
+export const mid = (lower: number) => Math.sqrt(px(lower) * px(lower + 1));
 /** Adjacent single-tick range for a new order at the current tick. */
 export const rangeFor = (side: Side, tick: number) => side === 'ask' ? tick + 1 : tick - 1;
-/** STRICT fill rule: the price has fully crossed the 1-tick range (position fully converted). */
+/** STRICT fill rule: the price has fully crossed the 1-tick range (position fully converted). tick == lower = partial (in range). */
 export const filled = (o: { side: Side; lower: number }, tick: number) => o.side === 'ask' ? tick >= o.lower + 1 : tick < o.lower;
+/** Fully back on the original side (position fully un-converted). */
+export const unfilled = (o: { side: Side; lower: number }, tick: number) => o.side === 'ask' ? tick < o.lower : tick >= o.lower + 1;
+/** Where the exit of a fill must sit: a bid exit (after an ask fill) at or BELOW the ask's range, an ask exit at or ABOVE the bid's range,
+ *  never on the losing side of the fill price. The keeper achieves this by leaving the filled range in place (exit lower == fill lower). */
+export const exitLower = (exitSide: Side, fillLower: number, tick: number) => exitSide === 'bid' ? Math.min(fillLower, tick - 1) : Math.max(fillLower, tick + 1);
 /** Proceeds of a fully crossed order (model): converted at the range mid price, plus 0.05% fee on the notional. */
-export function proceeds(o: Ord) { const mid = Math.sqrt(px(o.lower) * px(o.lower + 1)); return o.side === 'ask' ? o.amt * mid * (1 + V4.fee) : o.amt / mid * (1 + V4.fee); }
-/** v4 liquidity for a 1-tick single-sided order spending at most `amtWei` (0.1% haircut so PositionManager never needs more than amountMax). */
+export function proceeds(o: { side: Side; lower: number; amt: number }) { const m = mid(o.lower); return o.side === 'ask' ? o.amt * m * (1 + V4.fee) : o.amt / m * (1 + V4.fee); }
+const HAIRCUT = 1e-6; // rounding headroom only (was 0.999: 0.1% of every order sat idle in the vault and the book counted it as a loss)
+/** v4 liquidity for a 1-tick single-sided order spending at most `amtWei`. */
 export function liquidityFor(side: Side, lower: number, amtWei: bigint): bigint {
-  const Q = 2 ** 96, a = Math.sqrt(px(lower)) * Q, b = Math.sqrt(px(lower + 1)) * Q, x = Number(amtWei) * 0.999;
+  const Q = 2 ** 96, a = Math.sqrt(px(lower)) * Q, b = Math.sqrt(px(lower + 1)) * Q, x = Number(amtWei) * (1 - HAIRCUT);
   return BigInt(Math.floor(side === 'ask' ? x * a / Q * b / (b - a) : x * Q / (b - a)));
 }
-export type Book = { orders: Ord[]; sidePaused: Record<Side, boolean>; trips: { t: number; pnlMon: number }[]; dayPnl: number; dayGas: number; halted: string };
+/** Amount (token units, 18 dp) a 1-tick single-sided position of `liq` holds: what was actually minted. Inverse of liquidityFor. */
+export function amountFor(side: Side, lower: number, liq: bigint | number): number {
+  const Q = 2 ** 96, a = Math.sqrt(px(lower)) * Q, b = Math.sqrt(px(lower + 1)) * Q, L = Number(liq);
+  return (side === 'ask' ? L * (b - a) / (a / Q * b) : L * (b - a) / Q) / 1e18;
+}
+/** Book written by the pre-fix keeper (no v): amounts were amountMax; minted was 0.999x, the 0.1% stayed in the vault. Idempotent. */
+export function migrateOrder(o: Ord): Ord {
+  if (o.v === 2) return o;
+  if (o.kind === 'exit') { o.spare = o.amt * 0.001; o.amt *= 0.999; o.startAmt *= 0.999; o.startMonEq *= 0.999; }
+  else { o.amt *= 0.999; o.startAmt = o.amt; o.startMonEq *= 0.999; }
+  o.v = 2; return o;
+}
+export type Book = { orders: Ord[]; sidePaused: Record<Side, boolean>; trips: { t: number; pnlMon: number; rounds?: number; id?: string }[]; dayPnl: number; dayGas: number; halted: string };
 export const newBook = (): Book => ({ orders: [], sidePaused: { ask: false, bid: false }, trips: [], dayPnl: 0, dayGas: 0, halted: '' });
-/** Open-exit mark-to-market vs simply holding the starting asset (MON-eq). */
-export const mtm = (b: Book, tick: number) => b.orders.filter(o => o.kind === 'exit').reduce((a, o) => a + monEq(o.side === 'ask' ? 'MON' : 'WETH', o.amt, tick) - monEq(o.startAsset, o.startAmt, tick), 0);
+/** Mark-to-market of one order vs holding what it started with (MON-eq; fees not included = conservative). Unfilled fresh = 0. */
+export function orderMtm(o: Ord, tick: number) {
+  if (o.kind === 'exit') return monEq(assetOf(o.side), o.amt + (o.spare ?? 0), tick) - monEq(o.startAsset, o.startAmt, tick);
+  if (!o.crossed) return 0;
+  return monEq(assetOf(o.side === 'ask' ? 'bid' : 'ask'), proceeds(o), tick) - monEq(o.startAsset, o.startAmt, tick);
+}
+export const mtm = (b: Book, tick: number) => b.orders.reduce((a, o) => a + orderMtm(o, tick), 0);
 export type Action = { do: 'close'; o: Ord; why: 'fill' | 'recentre' } | { do: 'place'; kind: Ord['kind']; side: Side; lower: number; amt: number; start?: Ord } | { do: 'halt'; why: string };
-/**
- * Decide the next actions for one block. Caller executes them in order (live: vault txs, dry/replay: model) and calls apply*().
- * Rules: fills first (fresh fill -> exit on the opposite side with the proceeds, adjacent to spot); cap hit -> pause the side that
- * filled (hold the asset, no recycle); re-centre fresh after 5 min; arm one fresh per unpaused side while open < 4.
- */
-/** Size a fresh order to what the vault actually holds: ask uses <= 45% of vault MON (room for an exit), bid <= 90% of vault WETH; 0 = skip side. */
-export function freshSize(side: Side, tick: number, inv?: { mon: number; weth: number }): number {
+/** Gas limit: estimate x gasMult (rounded up); null estimate (estimateGas failed, eth_call ok) -> fixed per-type fallback. */
+export const gasLimit = (est: bigint | null, kind: Side | 'close') => est === null ? BigInt(STRATEGY.gasFallback[kind]) : (est * BigInt(Math.round(STRATEGY.gasMult * 1000)) + 999n) / 1000n;
+/** Priority tip in gwei: configured value clamped to <= 1 gwei and >= the network minimum (>= 0). */
+export const tipGwei = (cfg?: number, netMin = 0) => Math.max(Math.min(Number.isFinite(cfg as number) ? cfg as number : STRATEGY.tipGwei, 1), Math.max(0, netMin));
+/** Round-trip gas of one order in MON (place + the close that eventually realises it) at `gwei`, using the fallback limits as the bound. */
+export const tripGasMon = (side: Side, gwei: number) => (STRATEGY.gasFallback[side] + STRATEGY.gasFallback.close) * gwei * 1e-9;
+/** Min-profit gate: a round trip earns the 0.05% fee on both legs; require that to be >= minProfitMult x the round-trip gas. */
+export const worthIt = (side: Side, amtMonEq: number, gwei: number) => amtMonEq * V4.fee * 2 >= STRATEGY.minProfitMult * tripGasMon(side, gwei);
+/** Size an order to what the vault holds: ask <= 45% of vault MON, bid <= 90% of vault WETH, <= 1,000 MON-eq; 0 = skip the side. */
+export function freshSize(side: Side, tick: number, inv?: { mon: number; weth: number }, gasGwei?: number): number {
   const cap = side === 'ask' ? STRATEGY.sizeMonEq : STRATEGY.sizeMonEq * 0.995 * px(tick); /* 0.5% under the on-chain MON-eq cap so a price drop before mining can't trip TooBig */
-  if (!inv) return cap;
-  const amt = Math.min(cap, side === 'ask' ? inv.mon * STRATEGY.askInvFrac : inv.weth * STRATEGY.bidInvFrac);
-  return monEq(side === 'ask' ? 'MON' : 'WETH', amt, tick) >= STRATEGY.minOrderMonEq ? amt : 0;
+  const amt = inv ? Math.min(cap, side === 'ask' ? inv.mon * STRATEGY.askInvFrac : inv.weth * STRATEGY.bidInvFrac) : cap;
+  const me = monEq(assetOf(side), amt, tick);
+  if (me < STRATEGY.minOrderMonEq) return 0;
+  if (gasGwei !== undefined && !worthIt(side, me, gasGwei)) return 0;
+  return amt;
 }
 /** UTC day key; the daily-loss guard is scoped to it and resets automatically when it changes. */
 export const utcDay = (now: number) => new Date(now).toISOString().slice(0, 10);
@@ -76,39 +115,56 @@ export function clearHaltOnStart(b: Book): string { const was = b.halted || ''; 
 export function reconcile(b: Book, onchain: string[]): { dropped: Ord[]; orphans: string[] } {
   const on = new Set(onchain), known = new Set(b.orders.map(o => o.id));
   const dropped = b.orders.filter(o => !on.has(o.id)); b.orders = b.orders.filter(o => on.has(o.id));
-  if (b.orders.length <= STRATEGY.maxOpen - 2) b.sidePaused = { ask: false, bid: false };
+  sideFull(b);
   return { dropped, orphans: onchain.filter(id => !known.has(id)) };
 }
-export function plan(b: Book, tick: number, now: number, ok: { gas: boolean; fresh: boolean }, inv?: { mon: number; weth: number }): Action[] {
-  // No hard halt here any more: fills are always handled (exit placed), only NEW orders wait (see waitReason).
-  if (dayLoss(b, tick) < -STRATEGY.dailyLossMon) ok = { ...ok, gas: false };
-  const acts: Action[] = []; let open = b.orders.length;
-  for (const o of b.orders) if (filled(o, tick)) {
-    acts.push({ do: 'close', o, why: 'fill' });
-    if (o.kind === 'fresh') { const s: Side = o.side === 'ask' ? 'bid' : 'ask'; acts.push({ do: 'place', kind: 'exit', side: s, lower: rangeFor(s, tick), amt: NaN, start: o }); }
-    else open--;
+/** pause-when-full: a side is "full" while its order is filled and held as its exit; it resumes automatically when the price returns. */
+function sideFull(b: Book) { for (const s of ['ask', 'bid'] as Side[]) b.sidePaused[s] = b.orders.some(o => o.kind === 'fresh' && o.side === s && !!o.crossed); }
+/** Per block, before plan(): track full crosses and full returns of live orders (no tx; the range itself is the exit). */
+export function observe(b: Book, tick: number): { crossed: Ord[]; returned: Ord[] } {
+  const crossed: Ord[] = [], returned: Ord[] = [];
+  for (const o of b.orders) if (o.kind === 'fresh') {
+    if (!o.crossed && filled(o, tick)) { o.crossed = true; crossed.push(o); }
+    else if (o.crossed && unfilled(o, tick)) { o.crossed = false; o.rounds = (o.rounds ?? 0) + 1; returned.push(o); }
   }
+  sideFull(b); return { crossed, returned };
+}
+export type Tunables = { recentreMs?: number; recentreTicks?: number };
+/**
+ * Decide the next actions for one block (call observe() first). Caller executes them in order (live: vault txs, dry/replay: model) and calls apply*().
+ * A filled order is NOT closed: the 1-tick range stays where it is and is now the exit, buying/selling back at exactly the fill price
+ * (old keeper: close + re-place the exit at tick+-1 = up to 5 ticks on the losing side, plus ~0.4 MON of gas per trip).
+ * Legacy exits (from the old keeper) are closed once fully filled. Unfilled orders re-centre only if > recentreTicks out AND >= recentreMs old.
+ * One order per side, at most maxFresh, total open <= vault maxOpen.
+ */
+export function plan(b: Book, tick: number, now: number, ok: { gas: boolean; fresh: boolean; gasGwei?: number }, inv?: { mon: number; weth: number }, tun: Tunables = {}): Action[] {
+  const rMs = tun.recentreMs ?? STRATEGY.recentreMs, rT = tun.recentreTicks ?? STRATEGY.recentreTicks;
+  if (dayLoss(b, tick) < -STRATEGY.dailyLossMon) ok = { ...ok, gas: false };
+  const acts: Action[] = [], closing = new Set<string>();
+  for (const o of b.orders) if (o.kind === 'exit' && filled(o, tick)) { acts.push({ do: 'close', o, why: 'fill' }); closing.add(o.id); }
   if (!ok.gas || !ok.fresh) return acts;
-  const closing = new Set(acts.filter(a => a.do === 'close').map(a => (a as any).o.id));
-  for (const o of b.orders) if (o.kind === 'fresh' && !closing.has(o.id) && now - o.placedAt > STRATEGY.recentreMs) { acts.push({ do: 'close', o, why: 'recentre' }); closing.add(o.id); open--; }
+  for (const o of b.orders) if (o.kind === 'fresh' && !o.crossed && unfilled(o, tick) && now - o.placedAt >= rMs && Math.abs(o.lower - rangeFor(o.side, tick)) > rT) { acts.push({ do: 'close', o, why: 'recentre' }); closing.add(o.id); }
+  const live = b.orders.filter(o => !closing.has(o.id)); let open = live.length, fresh = live.filter(o => o.kind === 'fresh').length;
   for (const side of ['ask', 'bid'] as Side[]) {
-    if (b.sidePaused[side]) continue;
-    if (b.orders.some(o => o.kind === 'fresh' && o.side === side && !closing.has(o.id))) continue;
-    if (open >= STRATEGY.maxOpen) continue;
-    const amt = freshSize(side, tick, inv); if (!(amt > 0)) continue; // too little inventory on this side: still place the other
-    acts.push({ do: 'place', kind: 'fresh', side, lower: rangeFor(side, tick), amt }); open++;
+    if (live.some(o => o.kind === 'fresh' && o.side === side)) continue;   // one per side (a filled one holds its slot = pause-when-full)
+    if (open >= STRATEGY.maxOpen || fresh >= STRATEGY.maxFresh) continue;
+    const amt = freshSize(side, tick, inv, ok.gasGwei); if (!(amt > 0)) continue; // too small / not worth the gas: still place the other side
+    acts.push({ do: 'place', kind: 'fresh', side, lower: rangeFor(side, tick), amt }); open++; fresh++;
   }
   return acts;
 }
-/** Book updates after an action executed. `got` = real (live) or modelled proceeds in the order's opposite asset. */
-export function applyClose(b: Book, o: Ord, why: 'fill' | 'recentre', tick: number, got: number, now: number) {
+/** Book update after a close. ret = what the vault got back: {mon, weth} from the Closed event, or a number in the asset the order holds now. */
+export function applyClose(b: Book, o: Ord, why: 'fill' | 'recentre', tick: number, ret: number | { mon: number; weth: number }, now: number) {
   b.orders = b.orders.filter(x => x.id !== o.id);
-  if (why === 'fill' && o.kind === 'exit') { const back = o.side === 'ask' ? 'WETH' : 'MON'; const pnl = monEq(back, got, tick) - monEq(o.startAsset, o.startAmt, tick); b.dayPnl += pnl; b.trips.push({ t: now, pnlMon: pnl }); }
-  if (why === 'fill' && o.kind === 'fresh' && b.orders.length >= STRATEGY.maxOpen - 1) b.sidePaused[o.side] = true; // cap hit: pause the filled side
-  if (b.orders.length <= STRATEGY.maxOpen - 2) b.sidePaused = { ask: false, bid: false };                            // room for both sides again
+  let r = ret as { mon: number; weth: number };
+  if (typeof ret === 'number') { const conv = o.kind === 'exit' ? why === 'fill' : !!o.crossed; const a = assetOf(conv ? (o.side === 'ask' ? 'bid' : 'ask') : o.side); r = a === 'MON' ? { mon: ret, weth: 0 } : { mon: 0, weth: ret }; }
+  const back = r.mon + monEq('WETH', r.weth, tick) + (o.spare ? monEq(assetOf(o.side), o.spare, tick) : 0);
+  const pnl = (o.kind === 'exit' && why === 'fill') || (o.rounds ?? 0) > 0 ? back - monEq(o.startAsset, o.startAmt, tick) : null;
+  if (pnl !== null) { b.dayPnl += pnl; b.trips.push({ t: now, pnlMon: pnl, rounds: o.kind === 'exit' ? 1 : (o.rounds ?? 0), id: o.id }); }
+  sideFull(b);
 }
+/** Book update after a place; amt = the MINTED amount (from the Placed event's liquidity), not amountMax. */
 export function applyPlace(b: Book, a: Extract<Action, { do: 'place' }>, id: string, amt: number, now: number, tick: number) {
-  const startAsset = a.start ? (a.start.side === 'ask' ? 'MON' : 'WETH') : (a.side === 'ask' ? 'MON' : 'WETH');
-  const startAmt = a.start ? a.start.amt : amt;
-  b.orders.push({ id, kind: a.kind, side: a.side, lower: a.lower, amt, placedAt: now, startMonEq: monEq(startAsset, startAmt, tick), startAsset, startAmt });
+  const startAsset = assetOf(a.side);
+  b.orders.push({ id, kind: a.kind, side: a.side, lower: a.lower, amt, placedAt: now, startMonEq: monEq(startAsset, amt, tick), startAsset, startAmt: amt, rounds: 0, v: 2 });
 }

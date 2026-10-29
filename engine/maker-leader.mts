@@ -3,7 +3,7 @@
  * Lease = JSON body of one GitHub issue comment (LEASE_REPO + LEASE_COMMENT_ID), edited in place via the REST API.
  * Ages use GitHub's own clock (response Date header minus comment updated_at), so host clock skew does not matter.
  *  - primary (Actions, LEASE_ROLE=primary): claims on start even over a fresh standby lease, then waits CLAIM_WAIT_S before
- *    sending so the standby sees the claim and finishes any in-flight tx. Renews every RENEW_S (write-only, ~450 req/h).
+ *    sending so the standby sees the claim and finishes any in-flight tx. Renews every RENEW_S (write-only, ~120 req/h).
  *  - standby (box, LEASE_ROLE=standby): reads every POLL_S; takes over only when the lease is > TAKEOVER_S stale or released;
  *    steps down at once when it reads another fresh holder.
  *  - Self-fence: a leader whose last successful renewal is > FENCE_S old stops sending (FENCE_S < TAKEOVER_S).
@@ -13,7 +13,7 @@
 const REPO = process.env.LEASE_REPO ?? 'Blockchains/monaf-keeper', CID = process.env.LEASE_COMMENT_ID ?? '', TOKEN = process.env.GH_TOKEN ?? '';
 const ROLE = process.env.LEASE_ROLE === 'primary' ? 'primary' : 'standby';
 export const ME = process.env.LEASE_INSTANCE || `${ROLE}-${process.pid}-${Math.random().toString(36).slice(2, 8)}`;
-const RENEW_S = 8, POLL_S = 4, FENCE_S = 15, TAKEOVER_S = 25, CLAIM_WAIT_S = 30;
+const RENEW_S = 30, POLL_S = 5, FENCE_S = 45, TAKEOVER_S = 60, CLAIM_WAIT_S = 30; // ~120 writes/h; FENCE_S < TAKEOVER_S
 export type Lease = { holder: string; role?: string; at?: string; released?: boolean; epoch?: number; book?: unknown };
 type Hooks = { snapshot: () => unknown; adopt: (book: unknown, from: string) => void; note: (s: string) => void };
 

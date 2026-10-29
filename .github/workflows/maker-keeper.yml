@@ -1,6 +1,6 @@
 name: Maker keeper v4 (primary)
 # Always-on PRIMARY copy of engine/maker-keeper-v4.mts. A box copy is standby and only sends when this job's lease
-# (locked issue comment, see LEADER-LEASE.md) is >25 s stale or released. One job runs ~5h50m, releases the lease,
+# (locked issue comment, see LEADER-LEASE.md) is >60 s stale or released. One job runs ~5h50m, releases the lease,
 # re-dispatches itself and exits; the 5-min cron is a safety net. Concurrency: at most one running.
 # SECURITY: triggers are schedule + workflow_dispatch ONLY. Never add pull_request / pull_request_target / issue_comment /
 # workflow_run triggers: this job holds a signing key.
