@@ -13,8 +13,7 @@ async function liveTick(v){try{const r=await fetch('https://rpc.monad.xyz',{meth
 async function load(){
  let s;try{s=await (await fetch('status.json?t='+Date.now(),{cache:'no-store'})).json()}catch(e){document.getElementById('alerts').innerHTML='<div class="alert">status.json could not be loaded</div>';return}
  const age=ago(s.at),lt=await liveTick(s.vault);const al=[...s.alerts];
- if(age>180)al.unshift(`STATUS SILENT: last update ${age} s ago (> 180 s)`);
- if(s.leader&&s.leader.leaseAgeS!=null&&s.leader.leaseAgeS+age>180)al.unshift(`KEEPER SILENT > 3 min: lease last renewed ${s.leader.leaseAgeS+age} s ago`);
+ if(age>300)al.unshift(`STATUS FEED STALE: last update ${age} s ago. The publisher may be down, so keeper health is unknown.`);
  document.getElementById('alerts').innerHTML=al.length?al.map(a=>`<div class="alert">⚠ ${a}</div>`).join(''):'<div class="ok">Keeper alive: lease fresh, no alerts</div>';
  const p=s.pnl.vsFundingAtSpotMon;
  document.getElementById('main').innerHTML=`
