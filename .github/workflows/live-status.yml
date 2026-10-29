@@ -29,7 +29,7 @@ jobs:
           LEASE_REPO: ${{ github.repository }}
         run: |
           if [ -n "$QN_HTTP" ]; then echo "::add-mask::$QN_HTTP"; for p in $(printf '%s' "$QN_HTTP" | sed -E 's#^[a-z]+://##' | tr '/?&=' '    '); do [ ${#p} -ge 8 ] && echo "::add-mask::$p"; done; fi
-          mkdir -p out && cp site/index.html site/.nojekyll out/
+          mkdir -p out && cp site/index.html site/.nojekyll out/ && cp -r site/v6 out/
           curl -sf "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/gh-pages/status.json" -o prev.json || echo '{}' > prev.json
           export OUT_DIR=out PREV=prev.json TICK_S=30 RUN_FOR_S=20900
           (node --experimental-strip-types --no-warnings engine/live-status.mts 2>&1 | sed -uE 's#(https?|wss?)://[^ "]+#<rpc>#g') &
