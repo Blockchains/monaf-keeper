@@ -68,6 +68,8 @@ export const filled = (o: { side: Side; lower: number; w?: number }, tick: numbe
 /** Fully back on the original side (position fully un-converted). */
 export const unfilled = (o: { side: Side; lower: number; w?: number }, tick: number) => o.side === 'ask' ? tick < o.lower : tick >= o.lower + wOf(o);
 /** Which way the order trades right now: an unfilled ask sells MON (ask); a filled ask holds WETH and buys MON back (bid), etc. */
+/** Ticks from spot within which an order counts as in play (see plan). */
+export const IN_PLAY = 2;
 export const effSide = (o: Ord): Side => o.kind === 'fresh' && o.crossed ? (o.side === 'ask' ? 'bid' : 'ask') : o.side;
 /** Ticks between spot and the near edge of the range (0 = in range). */
 export const distTo = (o: { lower: number; w?: number }, tick: number) => tick < o.lower ? o.lower - tick : tick >= o.lower + wOf(o) ? tick - (o.lower + wOf(o)) + 1 : 0;
@@ -193,7 +195,11 @@ export function plan(b: Book, tick: number, now: number, ok: { gas: boolean; fre
   // STRICTLY one resting order per trading direction (effSide): a filled ask now buys MON back, so it IS the bid. Keep the order
   // nearest to spot per direction, close the rest in this block's batch
   // (one execute tx together with any re-place; only on a fresh block with acceptable gas, like recentres).
-  for (const s of ['ask', 'bid'] as Side[]) { const g = b.orders.filter(o => !closing.has(o.id) && effSide(o) === s).sort((x, y) => distTo(x, tick) - distTo(y, tick));
+  // Hysteresis: an order within IN_PLAY ticks of spot is being traded right now and its direction flips with every tick (crossed <->
+  // returned). It is never closed as an extra and covers BOTH directions for placement, so a 1-tick price wobble cannot cause a
+  // close/place cycle (seen live 22:36-22:49 UTC: ~15 txs in 13 min). Once price leaves it, it gets a direction and duplicates resolve once.
+  const inPlay = (o: Ord) => distTo(o, tick) <= IN_PLAY;
+  for (const s of ['ask', 'bid'] as Side[]) { const g = b.orders.filter(o => !closing.has(o.id) && !inPlay(o) && effSide(o) === s).sort((x, y) => distTo(x, tick) - distTo(y, tick));
     for (const o of g.slice(1)) { acts.push({ do: 'close', o, why: 'extra' }); closing.add(o.id); } }
   const idle = tun.deployIdle ?? true;
   if (idle && inv) for (const o of b.orders) if (o.kind === 'fresh' && !o.crossed && !closing.has(o.id) && unfilled(o, tick)) {
@@ -206,7 +212,7 @@ export function plan(b: Book, tick: number, now: number, ok: { gas: boolean; fre
     if ((a.o.side === 'ask') === conv) pending.weth += v; else pending.mon += v; } // funds the closes return this tx (model, conservative enough: ranges are 1 tick)
   if (ok.calm === false) return acts; // D4: market moving > placeMaxMoveTicks: closes only, no new orders this block (auto-resumes when calm)
   for (const side of ['ask', 'bid'] as Side[]) {
-    if (live.some(o => effSide(o) === side) || open >= STRATEGY.maxOpen) continue; // one resting order per direction, ever
+    if (live.some(o => effSide(o) === side || inPlay(o)) || open >= STRATEGY.maxOpen) continue; // one resting order per direction, ever
     const amt = freshSize(side, tick, inv && { mon: inv.mon + pending.mon, weth: inv.weth + pending.weth }, ok.gasGwei); if (!(amt > 0)) continue;
     acts.push({ do: 'place', kind: 'fresh', side, lower: rangeFor(side, tick, geo), amt, w: geo.width }); open++;
   }

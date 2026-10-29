@@ -25,15 +25,16 @@ test('a filled order is never closed: it stays in place as its own exit (no tx);
   const ask = b.orders.find(o => o.side === 'ask')!; assert.equal(ask.lower, 1);
   assert.equal(run(b, 1, 1000).length, 0); assert.ok(!ask.crossed);                                       // tick inside [1,2): partial -> nothing
   const bid0 = b.orders.find(o => o.side === 'bid')!;
-  const acts = run(b, 2, 2000) as any[]; assert.ok(ask.crossed); assert.ok(b.orders.includes(ask), 'filled ask stays as its own exit (now the bid)');
-  // Phase 1 strict one-per-direction: the old bid is now a 2nd bid -> closed ('extra'), and a new ask quoted, in ONE plan (one batched tx)
+  assert.equal(run(b, 2, 2000).length, 0, 'just filled, still in play (<= IN_PLAY ticks): no churn'); assert.ok(ask.crossed); assert.ok(b.orders.includes(ask), 'filled ask stays as its own exit (now the bid)');
+  // Phase 1 strict one-per-direction once price has left it: the old bid is now a 2nd bid -> closed ('extra'), and a new ask quoted, in ONE plan
+  const acts = run(b, 4, 2500) as any[];
   assert.deepEqual(acts.map(x => [x.do, x.do === 'close' ? x.o.id : x.side, x.why ?? '']), [['close', bid0.id, 'extra'], ['place', 'ask', '']]);
   run(b, 1, 3000); assert.ok(ask.crossed); assert.equal(ask.rounds, 0);                                    // half way back: not a trip
   run(b, 0, 4000); assert.equal(ask.crossed, false); assert.equal(ask.rounds, 1); assert.ok(b.orders.includes(ask)); assert.equal(b.sidePaused.ask, false);
 });
 test('pause-when-full + no-stall: never more than 1 order per side / 2 total, nothing placed while both are filled, resumes after', () => {
   const b = newBook(); run(b, 0, 0);
-  for (const t of [2, 5, -3, -8, 0, 4, -1, 1, 0]) { run(b, t, 1000); assert.ok(b.orders.length <= STRATEGY.maxFresh); for (const s of ['ask', 'bid']) assert.ok(b.orders.filter(o => effSide(o) === s).length <= 1, `t=${t} ${s}`); }
+  for (const t of [2, 5, -3, -8, 0, 4, -1, 1, 0]) { run(b, t, 1000); assert.ok(b.orders.length <= STRATEGY.maxFresh); for (const s of ['ask', 'bid']) assert.ok(b.orders.filter(o => distTo(o, t) > 2 && effSide(o) === s).length <= 1, `t=${t} ${s}`); }
   const both = newBook(); applyPlace(both, { do: 'place', kind: 'fresh', side: 'ask', lower: 1, amt: 1 }, 'a', 100, 0, 0); applyPlace(both, { do: 'place', kind: 'fresh', side: 'bid', lower: -1, amt: 1 }, 'b', 100, 0, 0);
   both.orders[0].crossed = both.orders[1].crossed = true; assert.equal(plan(both, 0, 99 * MIN, { gas: true, fresh: true }).length, 0);
 });
@@ -106,7 +107,7 @@ test('legacy exits close on a full fill and count against the vault maxOpen; rec
 test('deploy idle: an empty direction is quoted from idle funds; unfilled orders top up only when >= 1.5x and >= +100 MON-eq; old rule with deployIdle=false', () => {
   const T = -116700; const ok = { gas: true, fresh: true };
   const b = newBook(); applyPlace(b, { do: 'place', kind: 'fresh', side: 'bid', lower: T + 20, amt: 0.0088 }, 'held', 0.0088, 0, T); b.orders[0].crossed = true;
-  applyPlace(b, { do: 'place', kind: 'fresh', side: 'ask', lower: T + 1, amt: 150 }, 'ask', 150, 0, T); observe(b, T);
+  applyPlace(b, { do: 'place', kind: 'fresh', side: 'ask', lower: T + 3, amt: 150 }, 'ask', 150, 0, T); observe(b, T);
   const inv = { mon: 727, weth: 0.0108 };
   const a = plan(b, T, 99 * MIN, ok, inv);
   const bid = a.find(x => x.do === 'place' && x.side === 'bid') as any; assert.ok(bid, 'new bid from idle WETH'); assert.ok(bid.amt > 0 && bid.amt <= 500 * px(T));
@@ -159,9 +160,9 @@ test('Phase 1 recentre uses the offset target: > 8 ticks from (spot + offset) AN
 });
 test('strict one unfilled order per side: the live 3-order state (2 unfilled asks + 1 bid) closes the farther ask in one plan, places nothing', () => {
   const T = -116695, b = newBook();
-  applyPlace(b, { do: 'place', kind: 'fresh', side: 'ask', lower: T + 1, amt: 300 }, 'a1', 300, 0, T);
-  applyPlace(b, { do: 'place', kind: 'fresh', side: 'ask', lower: T + 4, amt: 300 }, 'a2', 300, 0, T);
-  applyPlace(b, { do: 'place', kind: 'fresh', side: 'bid', lower: T - 1, amt: 0.008 }, 'b1', 0.008, 0, T);
+  applyPlace(b, { do: 'place', kind: 'fresh', side: 'ask', lower: T + 3, amt: 300 }, 'a1', 300, 0, T);
+  applyPlace(b, { do: 'place', kind: 'fresh', side: 'ask', lower: T + 6, amt: 300 }, 'a2', 300, 0, T);
+  applyPlace(b, { do: 'place', kind: 'fresh', side: 'bid', lower: T - 4, amt: 0.008 }, 'b1', 0.008, 0, T);
   const a = plan(b, T, MIN, { gas: true, fresh: true }, { mon: 0, weth: 0 }) as any[];
   assert.deepEqual(a.map(x => [x.do, x.o?.id, x.why]), [['close', 'a2', 'extra']]);
   assert.equal(distTo({ lower: 5, w: 1 }, 0), 5); assert.equal(distTo({ lower: 0, w: 1 }, 0), 0); assert.equal(distTo({ lower: -3, w: 1 }, 0), 3);
@@ -169,4 +170,15 @@ test('strict one unfilled order per side: the live 3-order state (2 unfilled ask
 test('gas sanity: never sign far above real usage (1.5x the per-kind real limits)', () => {
   assert.equal(gasSane(540_000n, ['ask']), true); assert.equal(gasSane(541_000n, ['ask']), false); assert.equal(gasSane(1_200_000n, ['close', 'bid']), true);
   const src = readFileSync(new URL('./maker-keeper-v4.mts', import.meta.url), 'utf8'); assert.ok(/gasSane\(gas, kinds\)/.test(src) && /clampGeometry/.test(src) && /maxDistanceTicks/.test(src));
+});
+
+test('hysteresis: a 1-tick order wobbling at spot never causes close/place churn (live 22:36-22:49 UTC regression)', () => {
+  const T = -116730, b = newBook(), geo = { offset: 7, width: 1, spacing: 1 };
+  applyPlace(b, { do: 'place', kind: 'fresh', side: 'bid', lower: T, amt: 0.0025 }, 'x', 0.0025, 0, T + 1);   // bid right at spot
+  applyPlace(b, { do: 'place', kind: 'fresh', side: 'ask', lower: T + 8, amt: 400 }, 'a', 400, 0, T + 1);     // resting ask
+  let n = 0; for (const [i, t] of [T + 1, T - 1, T + 1, T - 1, T, T + 1, T - 1].entries()) { observe(b, t);
+    n += plan(b, t, (i + 1) * MIN, { gas: true, fresh: true }, { mon: 2000, weth: 0.02 }, { geo }).length; }
+  assert.equal(n, 0, 'no actions while the in-play order wobbles');
+  observe(b, T - 4); const a = plan(b, T - 4, 9 * MIN, { gas: true, fresh: true }, { mon: 2000, weth: 0.02 }, { geo }) as any[];
+  assert.deepEqual(a.map(x => [x.do, x.o?.id ?? x.side, x.why ?? '']), [['close', 'a', 'extra'], ['place', 'bid', '']], 'resolves once when price leaves');
 });
