@@ -37,6 +37,8 @@ const ercAbi = parseAbi(['function balanceOf(address) view returns (uint256)']);
 const svAbi = parseAbi(['function getSlot0(bytes32) view returns (uint160,int24,uint24,uint24)']);
 const vaultAbi = parseAbi(['function place(int24 tickLower,uint128 liquidity,uint128 amountMax,uint256 deadline) returns (uint256)', 'function close(uint256 tokenId,uint256 deadline) returns (uint256,uint256)',
   'function openCount() view returns (uint256)', 'function openIds(uint256) view returns (uint256)', 'function paused() view returns (bool)', 'function active() view returns (bool)', 'function keeper() view returns (address)', 'function poolId() view returns (bytes32)',
+  'function VERSION() view returns (uint8)', 'function snapshot() view returns (bool,bool,int24,uint160,uint256,uint256,uint256[])',
+  'function execute(uint256[] closeIds,(int24 tickLower,uint128 liquidity,uint128 amountMax)[] orders,uint256 deadline) returns (uint256)',
   'event Placed(uint256 indexed tokenId, int24 tickLower, bool sellMon, uint128 liquidity, uint256 amountMax)', 'event Closed(uint256 indexed tokenId, uint256 mon, uint256 weth)']);
 
 const book: Book = existsSync(BOOK) ? JSON.parse(readFileSync(BOOK, 'utf8')) : { ...newBook(), day: '', gasMon: 0 };
@@ -47,7 +49,7 @@ const TIP_GWEI = tipGwei(envNum('MAKER_TIP_GWEI', STRATEGY.tipGwei), envNum('MAK
 const st = book as Book & { day: string; gasMon: number };
 const save = () => writeFileSync(BOOK, JSON.stringify(book, null, 1));
 { const was = clearHaltOnStart(book); if (was) { console.log(`${new Date().toISOString()} startup: cleared persisted halt "${was}" (only STOP stops the bot)`); save(); } }
-let needReconcile = true, waiting = '', busySince = 0, wakes = 0, txs = { place: 0, close: 0, fail: 0 }; const startedAt = new Date().toISOString();
+let needReconcile = true, waiting = '', busySince = 0, wakes = 0, txs: { place: number; close: number; fail: number; batch?: number } = { place: 0, close: 0, fail: 0 }; const startedAt = new Date().toISOString();
 let nonce = -1, tick = 0, head = 0n, lastBlockAt = Date.now(), busy = false, feed = 'http', gasPrice = 0n, dryId = 0, live = false, vaultState = { active: false, paused: false };
 const log: string[] = []; const note = (s: string) => { log.push(`${new Date().toISOString()} ${s}`); if (log.length > 50) log.shift(); console.log(log.at(-1)); };
 
@@ -56,19 +58,30 @@ if (VAULT) { // refuse a vault that is not wired to the verified pool / this kee
   if (pid.toLowerCase() !== V4.poolId) throw new Error('vault poolId mismatch');
   if (account && k.toLowerCase() !== account.address.toLowerCase()) throw new Error('vault keeper is not this key');
 }
+/** V5 vault (MonafMakerVaultV5): one snapshot() read per block, standing approvals, batched execute(). V4 = unchanged per-op txs. */
+const V5 = VAULT ? await pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'VERSION' }).then(v => Number(v) === 5).catch(() => false) : false;
 
 /** Gas limit: estimate x 1.03; if estimateGas fails but eth_call succeeds (RPC flake), the fixed per-type fallback. A real revert throws here: nothing is sent. */
-async function gasFor(data: Hex, kind: Side | 'close'): Promise<{ gas: bigint; fallback: boolean }> {
-  try { return { gas: gasLimit(await pub.estimateGas({ account: account!.address, to: VAULT, data }), kind), fallback: false }; }
-  catch { await pub.call({ account: account!.address, to: VAULT, data }); return { gas: gasLimit(null, kind), fallback: true }; }
+async function gasFor(data: Hex, kinds: (Side | 'close')[]): Promise<{ gas: bigint; fallback: boolean }> {
+  const k0 = kinds[0], fb = () => kinds.reduce((a, k) => a + gasLimit(null, k), 0n);
+  try { const est = await pub.estimateGas({ account: account!.address, to: VAULT, data }); return { gas: gasLimit(est, k0), fallback: false }; }
+  catch { await pub.call({ account: account!.address, to: VAULT, data }); return { gas: fb(), fallback: true }; }
+}
+/** Pre-send guard for places: Monad bills the full gas LIMIT even on a revert, so never sign if the pool tick moved since the plan
+ *  (a same-block price move made the 2026-10-29 bid 0x2bf1c3dc revert with MaximumAmountExceeded: its range had flipped to the MON side). */
+async function tickUnchanged(planTick: number): Promise<boolean> {
+  const s0 = await pub.readContract({ address: V4.stateView as Address, abi: svAbi, functionName: 'getSlot0', args: [V4.poolId] } as any) as readonly [bigint, number, number, number];
+  return Number(s0[1]) === planTick;
 }
 const gasLog: { kind: string; limit: number; used: number; mon: number; ok: boolean }[] = [];
 /** Single nonce lane: every tx from this key goes through here, strictly sequential. */
-async function send(fn: 'place' | 'close', args: readonly unknown[], kind: Side | 'close') {
+async function send(fn: 'place' | 'close' | 'execute', args: readonly unknown[], kind: Side | 'close' | (Side | 'close')[], planTick?: number) {
   const data = encodeFunctionData({ abi: vaultAbi, functionName: fn, args: args as any });
   if (!live) return null;
   if (!canSend()) throw new Error('not lease leader: send skipped');
-  let { gas, fallback } = await gasFor(data, kind);
+  const kinds = Array.isArray(kind) ? kind : [kind];
+  if (planTick !== undefined && !(await tickUnchanged(planTick))) throw new Error(`tick moved since plan (${planTick}): place skipped, no tx sent`);
+  let { gas, fallback } = await gasFor(data, kinds);
   for (let attempt = 0; ; attempt++) {
     nonce = await pub.getTransactionCount({ address: account!.address, blockTag: 'pending' }); // reload pending nonce every send (wake / hand-off safe)
     const raw = await account!.signTransaction({ chainId: V4.chainId, type: 'eip1559', to: VAULT, nonce, gas, maxFeePerGas: gasPrice * 12n / 10n + TIP, maxPriorityFeePerGas: TIP, data });
@@ -76,13 +89,13 @@ async function send(fn: 'place' | 'close', args: readonly unknown[], kind: Side 
       const hash = await Promise.any(nodes.map(n => n.sendRawTransaction({ serializedTransaction: raw }))); nonce++;
       const rc = await pub.waitForTransactionReceipt({ hash, timeout: 20_000 });
       const cost = Number(rc.gasUsed * rc.effectiveGasPrice) / 1e18; st.gasMon += cost; st.dayGas += cost;
-      gasLog.push({ kind, limit: Number(gas), used: Number(rc.gasUsed), mon: cost, ok: rc.status === 'success' }); if (gasLog.length > 20) gasLog.shift();
+      gasLog.push({ kind: kinds.join('+'), limit: Number(gas), used: Number(rc.gasUsed), mon: cost, ok: rc.status === 'success' }); if (gasLog.length > 20) gasLog.shift();
       if (rc.status !== 'success') {
         txs.fail++;
         if (fallback && attempt === 0) { gas = gas * 13n / 10n; note(`${fn} ${kind} reverted at the fallback limit: one retry at ${gas}`); continue; } // only when the estimate had failed
         throw new Error(`reverted ${hash}`);
       }
-      txs[fn]++;
+      if (fn === 'execute') txs.batch = (txs.batch ?? 0) + 1; else txs[fn]++;
       return parseEventLogs({ abi: vaultAbi, logs: rc.logs });
     } catch (e) { nonce = -1; throw e; }
   }
@@ -91,20 +104,26 @@ const dl = () => BigInt(Math.floor(Date.now() / 1000) + 120);
 /** Reconcile the book with vault.openIds (startup + after a wake): drop orders closed elsewhere, close unknown vault positions back into the vault. */
 async function reconcileOnChain() {
   if (!VAULT) { needReconcile = false; return; }
-  const n = Number(await pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'openCount' }));
-  const ids = (await Promise.all(Array.from({ length: n }, (_, i) => pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'openIds', args: [BigInt(i)] })))).map(String);
+  const ids = V5 ? (await pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'snapshot' }))[6].map(String) : await idsV4(); const n = ids.length;
   if (live) book.orders = book.orders.filter(o => !o.id.startsWith('dry'));
   const r = reconcile(book, ids); save();
   note(`reconcile: on-chain open ${n} [${ids.join(',')}], book ${book.orders.length}, dropped ${r.dropped.map(o => o.id).join(',') || '-'}, orphans ${r.orphans.join(',') || '-'}`);
-  if (live) for (const id of r.orphans) { await send('close', [BigInt(id), dl()], 'close'); note(`closed orphan vault position #${id} (funds back to the vault)`); }
+  if (live && r.orphans.length) { if (V5) await send('execute', [r.orphans.map(BigInt), [], dl()], r.orphans.map(() => 'close' as const)); else for (const id of r.orphans) await send('close', [BigInt(id), dl()], 'close'); note(`closed orphan vault position(s) ${r.orphans.join(',')} (funds back to the vault)`); }
   needReconcile = false;
+}
+async function idsV4() {
+  const n = Number(await pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'openCount' }));
+  return (await Promise.all(Array.from({ length: n }, (_, i) => pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'openIds', args: [BigInt(i)] })))).map(String);
 }
 
 async function onBlock(n: bigint) {
   if (busy || n <= head) return; busy = true; busySince = Date.now(); head = n; const gapS = (Date.now() - lastBlockAt) / 1000; lastBlockAt = Date.now();
   try {
     if (rollDay(st, Date.now())) { note(`UTC day ${st.day}: daily counters reset`); save(); }
-    const [s0, gp, act, pau] = await Promise.all([pub.readContract({ address: V4.stateView as Address, abi: svAbi, functionName: 'getSlot0', args: [V4.poolId] }), pub.getGasPrice(),
+    let snapBal: [bigint, bigint] | null = null, s0: readonly [bigint, number, ...unknown[]], gp: bigint, act: boolean, pau: boolean;
+    if (V5) { const [sn, g] = await Promise.all([pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'snapshot' }), pub.getGasPrice()]); // 1 read instead of 5
+      [act, pau] = [sn[0], sn[1]]; s0 = [sn[3], sn[2]]; gp = g; snapBal = [sn[4], sn[5]]; }
+    else [s0, gp, act, pau] = await Promise.all([pub.readContract({ address: V4.stateView as Address, abi: svAbi, functionName: 'getSlot0', args: [V4.poolId] }), pub.getGasPrice(),
       VAULT ? pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'active' }) : false, VAULT ? pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'paused' }) : false]);
     tick = Number(s0[1]); gasPrice = gp; vaultState = { active: act, paused: pau };
     if (isLeader()) { const ob = observe(book, tick); for (const o of ob.crossed) note(`filled ${o.side} [${o.lower},${o.lower + 1}) #${o.id}: held in place as its own exit`);
@@ -114,11 +133,12 @@ async function onBlock(n: bigint) {
     if (!isLeader()) { waiting = 'standby (lease held elsewhere)'; return; } // status/heartbeat still written
     if (WANT_LIVE && !live) { waiting = 'vault inactive or paused by owner'; return; } // do nothing at all (no dry-run book drift)
     if (needReconcile) { if (live) await reconcileOnChain(); else needReconcile = false; }
-    const [monW, wethW] = VAULT ? await Promise.all([pub.getBalance({ address: VAULT }), pub.readContract({ address: V4.weth as Address, abi: ercAbi, functionName: 'balanceOf', args: [VAULT] })]) : [0n, 0n];
+    const [monW, wethW] = snapBal ?? (VAULT ? await Promise.all([pub.getBalance({ address: VAULT }), pub.readContract({ address: V4.weth as Address, abi: ercAbi, functionName: 'balanceOf', args: [VAULT] })]) : [0n, 0n]);
     const inv = VAULT ? { mon: Number(monW) / 1e18, weth: Number(wethW) / 1e18 } : undefined;
     const ok = { gas: gp <= BigInt(STRATEGY.gasCapGwei * 1e9), fresh: gapS <= STRATEGY.staleNoNewS, gasGwei: Number(gp + TIP) / 1e9 };
     const w = waitReason(book, tick, Date.now(), ok); if (w !== waiting) { note(w ? `wait: ${w}` : `resume: trading`); waiting = w; }
     const acts = plan(book, tick, Date.now(), ok, inv, TUN);
+    if (V5 && live && acts.filter(a => a.do !== 'halt').length > 1) { await runBatch(acts); return; } // one tx for all of this block's work
     for (const a of acts) {
       if (a.do === 'halt') continue; // never emitted any more; never pauses on chain
       if (a.do === 'close') {
@@ -131,7 +151,7 @@ async function onBlock(n: bigint) {
       } else {
         const amt = a.amt; if (!(amt > 0)) continue;
         const wei = BigInt(Math.floor(amt * 1e18)), liq = liquidityFor(a.side, a.lower, wei);
-        const ev = await send('place', [a.lower, liq, wei, dl()], a.side);
+        const ev = await send('place', [a.lower, liq, wei, dl()], a.side, tick);
         const pl = ev ? (ev.find(e => e.eventName === 'Placed') as any).args : null;
         const id = pl ? String(pl.tokenId) : `dry${dryId++}`, minted = amountFor(a.side, a.lower, pl ? pl.liquidity : liq); // book the MINTED amount, not amountMax
         applyPlace(book, a, id, minted, Date.now(), tick); save();
@@ -139,6 +159,23 @@ async function onBlock(n: bigint) {
       }
     }
   } catch (e) { note(`error ${redact(e)}`); } finally { busy = false; busySince = 0; }
+}
+
+/** V5 only: every close + place of one block in ONE execute() tx (closes first, then all mints netted in one PositionManager unlock). */
+async function runBatch(acts: ReturnType<typeof plan>) {
+  const closes = acts.filter(a => a.do === 'close') as Extract<ReturnType<typeof plan>[number], { do: 'close' }>[];
+  const places = (acts.filter(a => a.do === 'place') as Extract<ReturnType<typeof plan>[number], { do: 'place' }>[]).filter(a => a.amt > 0);
+  const orders = places.map(a => { const wei = BigInt(Math.floor(a.amt * 1e18)); return { tickLower: a.lower, liquidity: liquidityFor(a.side, a.lower, wei), amountMax: wei }; });
+  const kinds = [...closes.map(() => 'close' as const), ...places.map(a => a.side)];
+  const ev = await send('execute', [closes.map(a => BigInt(a.o.id)), orders, dl()], kinds, places.length ? tick : undefined);
+  if (!ev) return;
+  for (const a of closes) {
+    const c = (ev.find(e => e.eventName === 'Closed' && String((e as any).args.tokenId) === a.o.id) as any).args, ret = { mon: Number(c.mon) / 1e18, weth: Number(c.weth) / 1e18 };
+    applyClose(book, a.o as Ord, a.why, tick, ret, Date.now()); save(); note(`batch close ${a.why} ${a.o.kind} ${a.o.side} #${a.o.id} -> ${ret.mon.toPrecision(6)} MON + ${ret.weth.toPrecision(6)} WETH`);
+  }
+  const placed = ev.filter(e => e.eventName === 'Placed').map(e => (e as any).args);
+  places.forEach((a, i) => { const pl = placed[i]; const minted = amountFor(a.side, a.lower, pl.liquidity); applyPlace(book, a, String(pl.tokenId), minted, Date.now(), tick); save();
+    note(`batch place ${a.kind} ${a.side} ${minted.toPrecision(6)} ${a.side === 'ask' ? 'MON' : 'WETH'} [${a.lower},${a.lower + 1}) #${pl.tokenId}`); });
 }
 
 const wss = process.env.QN_WSS;
@@ -161,7 +198,7 @@ setInterval(() => {   // heartbeat for the supervisor; wake / clock-jump detecti
 }, 2_000);
 feedObj.start();
 process.on('SIGUSR2', () => feedObj.resync('SIGUSR2 (simulated WS drop)')); // ops/test: drop WS now, HTTP fallback + reconnect
-note(`maker keeper v4 ${WANT_LIVE ? 'LIVE requested (needs vault active + unpaused)' : 'DRY RUN'} <= ${STRATEGY.sizeMonEq} MON-eq/order, 1 per side, filled = own exit, tip ${TIP_GWEI} gwei, gas limit x${STRATEGY.gasMult}, recentre > ${TUN.recentreTicks} ticks & >= ${TUN.recentreMs / 60_000} min; never-stall mode (no keeperPause)`);
+note(`maker keeper v4${V5 ? ' (vault V5: snapshot + batched execute)' : ''} ${WANT_LIVE ? 'LIVE requested (needs vault active + unpaused)' : 'DRY RUN'} <= ${STRATEGY.sizeMonEq} MON-eq/order, 1 per side, filled = own exit, tip ${TIP_GWEI} gwei, gas limit x${STRATEGY.gasMult}, recentre > ${TUN.recentreTicks} ticks & >= ${TUN.recentreMs / 60_000} min; never-stall mode (no keeperPause)`);
 
 // leader lease (box <-> GitHub Actions); the lease carries the open book so a takeover continues the same positions
 const leaseHooks = {
