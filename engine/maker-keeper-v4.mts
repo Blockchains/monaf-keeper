@@ -136,7 +136,7 @@ async function onBlock(n: bigint) {
     else [s0, gp, act, pau] = await Promise.all([pub.readContract({ address: V4.stateView as Address, abi: svAbi, functionName: 'getSlot0', args: [V4.poolId] }), pub.getGasPrice(),
       VAULT ? pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'active' }) : false, VAULT ? pub.readContract({ address: VAULT, abi: vaultAbi, functionName: 'paused' }) : false]);
     tick = Number(s0[1]); gasPrice = gp; tickHist.push([Date.now(), tick]); while (tickHist.length && Date.now() - tickHist[0][0] > 10_000) tickHist.shift(); vaultState = { active: act, paused: pau };
-    if (isLeader()) { const ob = observe(book, tick); for (const o of ob.crossed) note(`filled ${o.side} [${o.lower},${o.lower + (o.w ?? 1)}) #${o.id}: held in place as its own exit`);
+    if (isLeader()) { const ob = observe(book, tick, Date.now()); for (const o of ob.crossed) note(`filled ${o.side} [${o.lower},${o.lower + (o.w ?? 1)}) #${o.id}: held in place as its own exit`);
       for (const o of ob.returned) note(`round trip ${o.rounds} done: ${o.side} [${o.lower},${o.lower + (o.w ?? 1)}) #${o.id} back to its start asset`); if (ob.crossed.length + ob.returned.length) save(); }
     const nowLive = WANT_LIVE && act && !pau;
     if (nowLive !== live) { note(`mode ${nowLive ? 'LIVE' : 'DRY RUN'} (MONAF_MAKER_LIVE=${WANT_LIVE ? 1 : 0} active=${act} paused=${pau})`); live = nowLive; }

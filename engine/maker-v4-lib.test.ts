@@ -2,7 +2,7 @@ import { test } from 'node:test'; import { readFileSync } from 'node:fs'; import
 import { newBook, plan, observe, applyClose, applyPlace, filled, unfilled, rangeFor, exitLower, proceeds, liquidityFor, amountFor, migrateOrder, mtm, freshSize, worthIt, tripGasMon, gasLimit, gasSane, clampGeometry, effSide, distTo, tipGwei, reconcile, rollDay, monEq, skewTarget, dailyLossLimit, dayLoss, waitReason, STRATEGY, V4, px, type Book } from './maker-v4-lib.mts';
 const MIN = 60_000;
 /** model executor: observe + plan + apply (the keeper's dry-run semantics) */
-const run = (b: Book, tick: number, now: number, inv?: { mon: number; weth: number }, gasGwei?: number) => { observe(b, tick); const acts = plan(b, tick, now, { gas: true, fresh: true, gasGwei }, inv);
+const run = (b: Book, tick: number, now: number, inv?: { mon: number; weth: number }, gasGwei?: number) => { observe(b, tick, now); const acts = plan(b, tick, now, { gas: true, fresh: true, gasGwei }, inv);
   for (const a of acts) { if (a.do === 'close') { const conv = a.o.kind === 'exit' ? a.why === 'fill' : !!a.o.crossed; const v = conv ? proceeds(a.o) : a.o.amt;
     applyClose(b, a.o, a.why, tick, ((a.o.side === 'ask') === conv) ? { mon: 0, weth: v } : { mon: v, weth: 0 }, now); }
     else if (a.do === 'place') applyPlace(b, a, String(Math.random()), a.amt, now, tick); } return acts; };
@@ -27,14 +27,14 @@ test('a filled order is never closed: it stays in place as its own exit (no tx);
   const bid0 = b.orders.find(o => o.side === 'bid')!;
   assert.equal(run(b, 2, 2000).length, 0, 'just filled, still in play (<= IN_PLAY ticks): no churn'); assert.ok(ask.crossed); assert.ok(b.orders.includes(ask), 'filled ask stays as its own exit (now the bid)');
   // Phase 1 strict one-per-direction once price has left it: the old bid is now a 2nd bid -> closed ('extra'), and a new ask quoted, in ONE plan
-  const acts = run(b, 4, 2500) as any[];
+  const acts = run(b, 4, 2000 + STRATEGY.flipHoldMs) as any[];
   assert.deepEqual(acts.map(x => [x.do, x.do === 'close' ? x.o.id : x.side, x.why ?? '']), [['close', bid0.id, 'extra'], ['place', 'ask', '']]);
-  run(b, 1, 3000); assert.ok(ask.crossed); assert.equal(ask.rounds, 0);                                    // half way back: not a trip
-  run(b, 0, 4000); assert.equal(ask.crossed, false); assert.equal(ask.rounds, 1); assert.ok(b.orders.includes(ask)); assert.equal(b.sidePaused.ask, false);
+  run(b, 1, 3000 + STRATEGY.flipHoldMs); assert.ok(ask.crossed); assert.equal(ask.rounds, 0);                                    // half way back: not a trip
+  run(b, 0, 4000 + STRATEGY.flipHoldMs); assert.equal(ask.crossed, false); assert.equal(ask.rounds, 1); assert.ok(b.orders.includes(ask)); assert.equal(b.sidePaused.ask, false);
 });
 test('pause-when-full + no-stall: never more than 1 order per side / 2 total, nothing placed while both are filled, resumes after', () => {
   const b = newBook(); run(b, 0, 0);
-  for (const t of [2, 5, -3, -8, 0, 4, -1, 1, 0]) { run(b, t, 1000); assert.ok(b.orders.length <= STRATEGY.maxFresh); for (const s of ['ask', 'bid']) assert.ok(b.orders.filter(o => distTo(o, t) > 2 && effSide(o) === s).length <= 1, `t=${t} ${s}`); }
+  for (const t of [2, 5, -3, -8, 0, 4, -1, 1, 0]) { run(b, t, 1000); assert.ok(b.orders.length <= STRATEGY.maxFresh); for (const s of ['ask', 'bid']) assert.ok(b.orders.filter(o => distTo(o, t) > 2 && !(o.flipAt !== undefined && 1000 - o.flipAt < STRATEGY.flipHoldMs) && effSide(o) === s).length <= 1, `t=${t} ${s}`); }
   const both = newBook(); applyPlace(both, { do: 'place', kind: 'fresh', side: 'ask', lower: 1, amt: 1 }, 'a', 100, 0, 0); applyPlace(both, { do: 'place', kind: 'fresh', side: 'bid', lower: -1, amt: 1 }, 'b', 100, 0, 0);
   both.orders[0].crossed = both.orders[1].crossed = true; assert.equal(plan(both, 0, 99 * MIN, { gas: true, fresh: true }).length, 0);
 });
@@ -176,9 +176,19 @@ test('hysteresis: a 1-tick order wobbling at spot never causes close/place churn
   const T = -116730, b = newBook(), geo = { offset: 7, width: 1, spacing: 1 };
   applyPlace(b, { do: 'place', kind: 'fresh', side: 'bid', lower: T, amt: 0.0025 }, 'x', 0.0025, 0, T + 1);   // bid right at spot
   applyPlace(b, { do: 'place', kind: 'fresh', side: 'ask', lower: T + 8, amt: 400 }, 'a', 400, 0, T + 1);     // resting ask
-  let n = 0; for (const [i, t] of [T + 1, T - 1, T + 1, T - 1, T, T + 1, T - 1].entries()) { observe(b, t);
+  let n = 0; for (const [i, t] of [T + 1, T - 1, T + 1, T - 1, T, T + 1, T - 1].entries()) { observe(b, t, (i + 1) * MIN);
     n += plan(b, t, (i + 1) * MIN, { gas: true, fresh: true }, { mon: 2000, weth: 0.02 }, { geo }).length; }
   assert.equal(n, 0, 'no actions while the in-play order wobbles');
-  observe(b, T - 4); const a = plan(b, T - 4, 9 * MIN, { gas: true, fresh: true }, { mon: 2000, weth: 0.02 }, { geo }) as any[];
+  observe(b, T - 4, 20 * MIN); const a = plan(b, T - 4, 20 * MIN, { gas: true, fresh: true }, { mon: 2000, weth: 0.02 }, { geo }) as any[];
   assert.deepEqual(a.map(x => [x.do, x.o?.id ?? x.side, x.why ?? '']), [['close', 'a', 'extra'], ['place', 'bid', '']], 'resolves once when price leaves');
+});
+
+test('time hysteresis: a resting ask crossed by a 15-tick wobble is not replaced, and nothing churns, until it has been held flipHoldMs', () => {
+  const T = -116750, b = newBook(), geo = { offset: 7, width: 1, spacing: 1 }, inv = { mon: 2000, weth: 0.02 }, ok = { gas: true, fresh: true };
+  applyPlace(b, { do: 'place', kind: 'fresh', side: 'ask', lower: T - 5, amt: 500 }, 'a', 500, 0, T - 13);
+  applyPlace(b, { do: 'place', kind: 'fresh', side: 'bid', lower: T - 25, amt: 0.003 }, 'b', 0.003, 0, T - 13);
+  let n = 0; for (const [i, t] of [T, T - 15, T, T - 14].entries()) { observe(b, t, (i + 1) * MIN); n += plan(b, t, (i + 1) * MIN, ok, inv, { geo }).length; }
+  assert.equal(n, 0, 'live 22:48/22:56 pattern: no place-then-close cycles');
+  observe(b, T, 5 * MIN); const now = 5 * MIN + STRATEGY.flipHoldMs; observe(b, T, now);
+  const a = plan(b, T, now, ok, inv, { geo }) as any[]; assert.ok(a.some(x => x.do === 'place' && x.side === 'ask'), 'held long enough: ask direction re-quoted');
 });

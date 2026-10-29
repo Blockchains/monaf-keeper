@@ -22,6 +22,7 @@ export const STRATEGY = {
   maxOpen: 4,               // vault limit: fresh orders + legacy exits
   maxFresh: 2,              // strictly one unfilled order per side (extras are closed in one batch)
   maxDistanceTicks: 10,     // vault limit (keeper always uses adjacent ticks)
+  flipHoldMs: 5 * 60_000,   // an order that crossed/returned within this window is 'unsettled': no extra-close, no replacement (churn guard)
   recentreMs: 30 * 60_000,  // D5: an UNFILLED order is re-centred only when >= 30 min old (was 15) ...
   recentreTicks: 8,         // ... AND more than 8 ticks (was 3) from the adjacent tick. Filled orders (= their own exit) are never moved.
   gasCapGwei: 150,          // no new orders / re-centres above this
@@ -52,7 +53,7 @@ export type Side = 'ask' | 'bid'; // ask: sells MON in [t+1,t+2) above spot (MON
 /** amt/startAmt = amount actually MINTED (not amountMax). crossed = fully converted right now; rounds = completed full round trips.
  *  spare = idle remainder left in the vault by the old 0.1% haircut (legacy exits only, in the exit's asset). v = book schema. */
 export type Ord = { id: string; kind: 'fresh' | 'exit'; side: Side; lower: number; amt: number; placedAt: number; startMonEq: number; startAsset: 'MON' | 'WETH'; startAmt: number;
-  crossed?: boolean; rounds?: number; spare?: number; v?: number; m0?: number; m0Day?: string; w?: number /* range width in ticks (default 1) */ };
+  crossed?: boolean; rounds?: number; spare?: number; v?: number; m0?: number; m0Day?: string; w?: number /* range width in ticks (default 1) */; flipAt?: number /* ms of last cross/return */ };
 export const wOf = (o: { w?: number }) => o.w ?? 1;
 export const px = (tick: number) => Math.pow(1.0001, tick);            // WETH per MON at tick
 export const monEq = (asset: 'MON' | 'WETH', x: number, tick: number) => asset === 'MON' ? x : x / px(tick);
@@ -161,11 +162,11 @@ export function reconcile(b: Book, onchain: string[]): { dropped: Ord[]; orphans
 /** pause-when-full: a side is "full" while its order is filled and held as its exit; it resumes automatically when the price returns. */
 function sideFull(b: Book) { for (const s of ['ask', 'bid'] as Side[]) b.sidePaused[s] = b.orders.some(o => o.kind === 'fresh' && o.side === s && !!o.crossed); }
 /** Per block, before plan(): track full crosses and full returns of live orders (no tx; the range itself is the exit). */
-export function observe(b: Book, tick: number): { crossed: Ord[]; returned: Ord[] } {
+export function observe(b: Book, tick: number, now = Date.now()): { crossed: Ord[]; returned: Ord[] } {
   const crossed: Ord[] = [], returned: Ord[] = [];
   for (const o of b.orders) if (o.kind === 'fresh') {
-    if (!o.crossed && filled(o, tick)) { o.crossed = true; crossed.push(o); }
-    else if (o.crossed && unfilled(o, tick)) { o.crossed = false; o.rounds = (o.rounds ?? 0) + 1; returned.push(o); }
+    if (!o.crossed && filled(o, tick)) { o.crossed = true; o.flipAt = now; crossed.push(o); }
+    else if (o.crossed && unfilled(o, tick)) { o.crossed = false; o.rounds = (o.rounds ?? 0) + 1; o.flipAt = now; returned.push(o); }
   }
   sideFull(b); return { crossed, returned };
 }
@@ -198,7 +199,9 @@ export function plan(b: Book, tick: number, now: number, ok: { gas: boolean; fre
   // Hysteresis: an order within IN_PLAY ticks of spot is being traded right now and its direction flips with every tick (crossed <->
   // returned). It is never closed as an extra and covers BOTH directions for placement, so a 1-tick price wobble cannot cause a
   // close/place cycle (seen live 22:36-22:49 UTC: ~15 txs in 13 min). Once price leaves it, it gets a direction and duplicates resolve once.
-  const inPlay = (o: Ord) => distTo(o, tick) <= IN_PLAY;
+  // Time hysteresis too: price wobbles of 10-20 ticks/min cross 1-tick ranges back and forth (live 22:48 & 22:56 UTC), so an order that
+  // crossed or returned < flipHoldMs ago is also unsettled.
+  const inPlay = (o: Ord) => distTo(o, tick) <= IN_PLAY || (o.flipAt !== undefined && now - o.flipAt < STRATEGY.flipHoldMs);
   for (const s of ['ask', 'bid'] as Side[]) { const g = b.orders.filter(o => !closing.has(o.id) && !inPlay(o) && effSide(o) === s).sort((x, y) => distTo(x, tick) - distTo(y, tick));
     for (const o of g.slice(1)) { acts.push({ do: 'close', o, why: 'extra' }); closing.add(o.id); } }
   const idle = tun.deployIdle ?? true;
