@@ -169,7 +169,7 @@ test('strict one unfilled order per side: the live 3-order state (2 unfilled ask
 });
 test('gas sanity: never sign far above real usage (1.5x the per-kind real limits)', () => {
   assert.equal(gasSane(540_000n, ['ask']), true); assert.equal(gasSane(541_000n, ['ask']), false); assert.equal(gasSane(1_200_000n, ['close', 'bid']), true);
-  const src = readFileSync(new URL('./maker-keeper-v4.mts', import.meta.url), 'utf8'); assert.ok(/gasSane\(gas, kinds\)/.test(src) && /clampGeometry/.test(src) && /maxDistanceTicks/.test(src));
+  const src = readFileSync(new URL('./maker-keeper-v4.mts', import.meta.url), 'utf8'); assert.ok(/gasSane\(gas, kinds(, p\.gasFb)?\)/.test(src) && /clampGeometry/.test(src) && /maxDistanceTicks/.test(src));
 });
 
 test('hysteresis: a 1-tick order wobbling at spot never causes close/place churn (live 22:36-22:49 UTC regression)', () => {

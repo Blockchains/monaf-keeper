@@ -44,9 +44,10 @@ export type Geometry = { offset: number; width: number; spacing: number };
 /** Clamp the configured geometry to the vault: V5 mints fixed 1-tick ranges (width 1) and reverts TooFar beyond maxDistanceTicks
  *  (ask: tickLower - tick; bid: tick - tickUpper). Offset is kept vaultMarginTicks inside so a small move before mining cannot revert. */
 export function clampGeometry(want: { offset: number; width: number }, vault: { fixedWidth?: number; maxDistance?: number; spacing?: number }): Geometry & { clamped: boolean } {
-  const spacing = vault.spacing ?? 1, width = vault.fixedWidth ?? Math.max(1, Math.round(want.width));
+  const spacing = vault.spacing ?? 1, width = vault.fixedWidth ?? Math.max(spacing, Math.round(want.width / spacing) * spacing);
   let offset = Math.max(0, Math.round(want.offset));
-  if (vault.maxDistance !== undefined) offset = Math.min(offset, Math.max(0, vault.maxDistance - 1 - STRATEGY.vaultMarginTicks));
+  // rangeFor rounds away from spot to the spacing: an ask's tickLower can land up to `spacing` ticks past tick+offset (V5: spacing 1 = unchanged)
+  if (vault.maxDistance !== undefined) offset = Math.min(offset, Math.max(0, vault.maxDistance - spacing - STRATEGY.vaultMarginTicks));
   return { offset, width, spacing, clamped: offset !== Math.round(want.offset) || width !== Math.round(want.width) };
 }
 export type Side = 'ask' | 'bid'; // ask: sells MON in [t+1,t+2) above spot (MON only). bid: sells WETH in [t-1,t) below spot (WETH only).
@@ -109,9 +110,10 @@ export const mtm = (b: Book, tick: number) => b.orders.reduce((a, o) => a + orde
 export type Why = 'fill' | 'recentre' | 'stop' | 'extra';
 export type Action = { do: 'close'; o: Ord; why: Why } | { do: 'place'; kind: Ord['kind']; side: Side; lower: number; amt: number; w?: number; start?: Ord } | { do: 'halt'; why: string };
 /** Never sign a tx whose limit is far above what such a tx really used (estimate glitch or unexpected path); returns false = skip, no tx. */
-export const gasSane = (limit: bigint, kinds: (Side | 'close')[]) => Number(limit) <= STRATEGY.gasSanityMult * kinds.reduce((a, k) => a + STRATEGY.gasFallback[k], 0);
+export type GasFb = Record<Side | 'close', number>;
+export const gasSane = (limit: bigint, kinds: (Side | 'close')[], fb: GasFb = STRATEGY.gasFallback) => Number(limit) <= STRATEGY.gasSanityMult * kinds.reduce((a, k) => a + fb[k], 0);
 /** Gas limit: estimate x gasMult (rounded up); null estimate (estimateGas failed, eth_call ok) -> fixed per-type fallback. */
-export const gasLimit = (est: bigint | null, kind: Side | 'close') => est === null ? BigInt(STRATEGY.gasFallback[kind]) : (est * BigInt(Math.round(STRATEGY.gasMult * 1000)) + 999n) / 1000n;
+export const gasLimit = (est: bigint | null, kind: Side | 'close', fb: GasFb = STRATEGY.gasFallback) => est === null ? BigInt(fb[kind]) : (est * BigInt(Math.round(STRATEGY.gasMult * 1000)) + 999n) / 1000n;
 /** Priority tip in gwei: configured value clamped to <= 1 gwei and >= the network minimum (>= 0). */
 export const tipGwei = (cfg?: number, netMin = 0) => Math.max(Math.min(Number.isFinite(cfg as number) ? cfg as number : STRATEGY.tipGwei, 1), Math.max(0, netMin));
 /** Round-trip gas of one order in MON (place + the close that eventually realises it) at `gwei`, using the fallback limits as the bound. */

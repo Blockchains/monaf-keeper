@@ -7,8 +7,20 @@
     "keeper": "0x85c2bBcf6d7419740d01a60874BD3F85B2c96Fe2",
     "poolId": "0x18a9fc874581f3ba12b7898f80a683c66fd5877fd74b26a85ba9a3a79c549954",
     "currency1": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
-    "decimals1": 6, "fee": 500, "spacing": 10,
-    "geometry": { "offset": 50, "width": 50 },
-    "deployJson": "https://blockchains.github.io/monaf-keeper/v6/deploy.json"
+    "decimals1": 6,
+    "fee": 500,
+    "spacing": 10,
+    "geometry": {
+      "offset": 50,
+      "width": 50
+    },
+    "deployJson": "https://blockchains.github.io/monaf-keeper/v6/deploy.json",
+    "autoEnable": true,
+    "discoverFromNonce": 1863,
+    "tunables": {
+      "recentreTicks": 20,
+      "stopTicks": 150,
+      "placeMaxMoveTicks": 20
+    }
   }
 }

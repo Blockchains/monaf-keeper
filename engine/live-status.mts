@@ -106,6 +106,14 @@ async function runs() {
   try { const r = await fetch(`https://api.github.com/repos/${process.env.LEASE_REPO ?? 'Blockchains/monaf-keeper'}/actions/workflows/maker-keeper.yml/runs?per_page=3`, { headers: { Authorization: `Bearer ${tok}`, 'User-Agent': 'monaf-live-status' }, signal: AbortSignal.timeout(5000) });
     const j: any = await r.json(); return (j.workflow_runs ?? []).map((x: any) => ({ id: x.id, status: x.status, conclusion: x.conclusion, created: x.created_at, url: x.html_url })); } catch { return null; }
 }
+// V6 (MON/USDC) section: straight from the keeper's lease book (the keeper is the only one that knows discovery/gate state).
+// Read-only. Order amounts are not revalued here; the keeper's book carries ranges and start amounts.
+function v6Section(b: any, ls: any) {
+  if (!ls) return { state: 'unknown', note: 'no lease readable (GH_TOKEN/LEASE_COMMENT_ID missing)' };
+  if (!b) return { state: 'off', note: 'keeper published no V6 block (older keeper build or V6 disabled)' };
+  return { state: b.state ?? 'unknown', vault: b.vault ?? null, orders: (b.orders ?? []).map((o: any) => ({ id: String(o.id), side: o.side, kind: o.kind, range: o.lower == null ? null : [o.lower, o.lower + (o.w ?? 1)], heldAsExit: !!o.crossed, placedAt: o.placedAt ? new Date(o.placedAt).toISOString() : null, startAmt: o.startAmt ?? null })),
+    config: b.cfg ?? null, day: b.day ?? null, dayPnlMon: b.dayPnl ?? null, dayGasMon: b.dayGas ?? null, sidePaused: b.sidePaused ?? null };
+}
 async function once() {
   const head = await c.getBlockNumber();
   const [sn, gp, ls, rn] = await Promise.all([c.readContract({ address: VAULT, abi: vAbi, functionName: 'snapshot', blockNumber: head }), c.getGasPrice(), lease().catch(e => ({ error: redact(e) })), runs()]);
@@ -145,6 +153,7 @@ async function once() {
     keeperDay: (ls as any)?.book ? { day: (ls as any).book.day, dayPnlMon: (ls as any).book.dayPnl, sidePaused: (ls as any).book.sidePaused } : null,
     leader: ls ? { holder: (ls as any).holder, role: (ls as any).role, released: (ls as any).released, leaseAgeS: lAge, healthy: lAge !== null && lAge <= 60 && !(ls as any).released, error: (ls as any).error } : null,
     standby: 'box copy polls the lease every 5 s and takes over if it is > 60 s stale', runs: rn, lastKeeperTx: lastAct,
+    v6: v6Section((ls as any)?.book?.v6 ?? null, ls),
     alerts, actions: actions.slice(-20).reverse(), allActions: actions, scannedBlock: String(scanned), seenNonce, ownerNonce,
   };
   writeFileSync(`${OUT}/status.json`, JSON.stringify(s, null, 1));
