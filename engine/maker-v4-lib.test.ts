@@ -68,8 +68,8 @@ test('MTM: unfilled = 0, filled order marked at spot', () => {
   const b = newBook(); applyPlace(b, { do: 'place', kind: 'fresh', side: 'ask', lower: 1, amt: 100 }, '1', 100, 0, 0);
   assert.equal(mtm(b, 0), 0); observe(b, 2); assert.ok(Math.abs(mtm(b, 1) - 100 * 0.0005) < 0.01); assert.ok(mtm(b, 50) < 0 && mtm(b, -50) > 0);
 });
-test('gas: limit = estimate x 1.03 rounded up, fixed fallbacks, tip clamped to 0..1 gwei and >= network minimum', () => {
-  assert.equal(gasLimit(357_000n, 'ask'), 367_710n); assert.equal(gasLimit(100_001n, 'close'), 103_002n);
+test('gas: limit = estimate x 1.2 rounded up, fixed fallbacks, tip clamped to 0..1 gwei and >= network minimum', () => {
+  assert.equal(gasLimit(357_000n, 'ask'), 428_400n); assert.equal(gasLimit(100_001n, 'close'), 120_002n);
   assert.equal(gasLimit(null, 'ask'), 360_000n); assert.equal(gasLimit(null, 'bid'), 500_000n); assert.equal(gasLimit(null, 'close'), 300_000n);
   assert.equal(tipGwei(undefined), 0.5); assert.equal(tipGwei(10.2), 1); assert.equal(tipGwei(-1), 0); assert.equal(tipGwei(0), 0); assert.equal(tipGwei(0.2, 0.3), 0.3);
 });

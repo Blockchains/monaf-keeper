@@ -2,7 +2,7 @@
  * monaf maker keeper: ONE process, ONE key, driving MonafMakerVaultV5 (Uniswap v4 MON/WETH 0.05% ts1) and, once deployed,
  * MonafMakerVaultV6 (MON/USDC 0.05% ts10) (ALPHA, unaudited, no guaranteed returns).
  * Strategy in engine/maker-v4-lib.mts (STRATEGY): one order per side sized from vault inventory, a filled order stays in place as its
- * own exit, min-profit gate, gas cap 150 gwei, daily loss guard, strict full-cross fills. Gas: limit = estimate x 1.03 (fixed fallback
+ * own exit, min-profit gate, gas cap 150 gwei, daily loss guard, strict full-cross fills. Gas: limit = estimate x 1.2 (fixed fallback
  * per type only if estimateGas fails and eth_call succeeds), tip MAKER_TIP_GWEI (default 0.5, clamped to [MAKER_MIN_TIP_GWEI, 1]).
  * V6: auto-discovered (engine/maker-v6-gate.mts): the owner deploys from a wallet; a contract created by the owner whose runtime passes
  * the gate (VERSION 6, owner, keeper == this key, poolId, token1 == USDC) is adopted. Until then V6 is a no-op (rescan every 30 s).

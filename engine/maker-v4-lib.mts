@@ -34,9 +34,9 @@ export const STRATEGY = {
   bidInvFrac: 0.9,          // bid <= 90% of vault WETH
   minOrderMonEq: 5,         // hard floor
   minProfitMult: 3,         // D5: skip an order whose 2-leg fee (0.05% x 2) < 3x its round-trip gas (was 1.5)
-  gasMult: 1.03,            // gas limit = estimate x 1.03 (Monad bills the LIMIT, not gas used)
+  gasMult: 1.2,             // gas limit = estimate x 1.2 (Monad bills the LIMIT; 1.03 ran closes out of gas when state moved between estimate and inclusion: 0x830d10f8, 0x203d6909)
   gasFallback: { ask: 360_000, bid: 500_000, close: 300_000 }, // from real receipts (ask 345.6k, first bid 488k, close 290k; Monad bills the limit)
-  gasSanityMult: 1.5,       // never sign if estimate x 1.03 > 1.5 x the summed real-usage limits for the tx (something is off: skip, no tx)
+  gasSanityMult: 1.5,       // never sign if estimate x gasMult > 1.5 x the summed real-usage limits for the tx (something is off: skip, no tx)
   tipGwei: 0.5,             // priority tip (keeper clamps to [MAKER_MIN_TIP_GWEI, 1])
   capMode: 'pause' as const // both sides filled: hold, never market-recycle
 };
