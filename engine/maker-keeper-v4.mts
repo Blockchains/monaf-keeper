@@ -15,7 +15,8 @@
  * env: VAULT (V5), MAKER_KEEPER_KEY (0600 env file; never in a repo/browser/log), QN_HTTP / QN_WSS (never printed), STATUS (heartbeat path)
  *      FORK=1 (anvil fork test: broadcast only to QN_HTTP, never to public RPCs); MAKER_V6_OWNER / MAKER_V6_FROM_NONCE / MAKER_V6_VAULT (tests)
  */
-import { createPublicClient, http, webSocket, parseAbi, parseEventLogs, encodeFunctionData, type Address, type Hex } from 'viem';
+import { RpcPool, defaultPool } from './rpc-pool.mts';
+import { createPublicClient, http, custom, webSocket, parseAbi, parseEventLogs, encodeFunctionData, type Address, type Hex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { BlockFeed } from './maker-v4-feed.mts';
@@ -32,10 +33,13 @@ const account = process.env.MAKER_KEEPER_KEY ? privateKeyToAccount(process.env.M
 const redact = (e: unknown) => String((e as any)?.shortMessage ?? (e as any)?.message ?? e).replace(/https?:\/\/\S+|wss?:\/\/\S+/g, '<rpc>').slice(0, 200);
 process.on('unhandledRejection', e => console.log(`${new Date().toISOString()} unhandled ${redact(e)}`)); // never print a raw viem error (it carries the RPC host)
 const httpUrl = process.env.QN_HTTP || process.env.QUICKNODE_MONAD_RPC_URL || '';
-if (!httpUrl) throw new Error('QN_HTTP (RPC URL) is required: set it from a secret, never hardcode it');
+if (!httpUrl && FORK) throw new Error('QN_HTTP (RPC URL) is required in fork mode');
+if (!httpUrl) console.log('QN_HTTP not set: public Monad RPCs only (failsafe pool)');
 const chain = { id: V4.chainId, name: 'Monad', nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 }, rpcUrls: { default: { http: [httpUrl] } } } as const;
-const pub = createPublicClient({ chain, transport: http(httpUrl, { retryCount: 2, timeout: 15_000 }) });
-const nodes = (FORK ? [httpUrl] : [httpUrl, 'https://rpc.monad.xyz', 'https://rpc2.monad.xyz']).map(u => createPublicClient({ chain, transport: http(u, { timeout: 15_000 }) }));
+// RPC failsafe: QuickNode first, then public Monad RPCs; quota/timeout/stale -> instant failover + 10 min cooldown (engine/rpc-pool.mts)
+const pool = FORK ? new RpcPool([['fork', httpUrl]]) : defaultPool(httpUrl, { note: (s: string) => note(s) });
+if (!FORK) { void pool.probe(); setInterval(() => { void pool.probe(); }, 15_000).unref(); }
+const pub = createPublicClient({ chain, transport: custom({ request: ({ method, params }) => pool.request(method, params) }, { retryCount: 1 }) });
 const retry = async <T,>(f: () => Promise<T>, n = 4): Promise<T> => { for (let i = 0; ; i++) { try { return await f(); } catch (e) { if (i >= n) throw new Error(redact(e)); await new Promise(r => setTimeout(r, 1500 * (i + 1))); } } };
 const ercAbi = parseAbi(['function balanceOf(address) view returns (uint256)']);
 const svAbi = parseAbi(['function getSlot0(bytes32) view returns (uint160,int24,uint24,uint24)']);
@@ -106,7 +110,7 @@ async function makeEngine(p: Profile) {
         nonce = await pub.getTransactionCount({ address: account!.address, blockTag: 'pending' }); // reload pending nonce every send (wake / hand-off / 2-vault safe)
         const raw = await account!.signTransaction({ chainId: V4.chainId, type: 'eip1559', to: p.vault, nonce, gas, maxFeePerGas: gasPrice * 12n / 10n + TIP, maxPriorityFeePerGas: TIP, data });
         try {
-          const hash = await Promise.any(nodes.map(nd => nd.sendRawTransaction({ serializedTransaction: raw }))); nonce++;
+          const hash = await pool.broadcast(raw) as Hex; nonce++;
           const rc = await pub.waitForTransactionReceipt({ hash, timeout: 20_000 });
           const cost = Number(rc.gasUsed * rc.effectiveGasPrice) / 1e18; st.gasMon += cost; st.dayGas += cost;
           E.gasLog.push({ kind: kinds.join('+'), limit: Number(gas), used: Number(rc.gasUsed), mon: cost, ok: rc.status === 'success' }); if (E.gasLog.length > 20) E.gasLog.shift();
@@ -228,11 +232,10 @@ async function onBlock(n: bigint) {
 }
 
 const wss = process.env.QN_WSS;
-const rpcRot = FORK ? [pub] : [pub, ...nodes.slice(1)]; let rpcI = 0;
 const feedObj = new BlockFeed({
   openWs: wss ? (onB, onE) => { const ws = createPublicClient({ chain, transport: webSocket(wss, { retryCount: 0 }) }); const un = ws.watchBlockNumber({ emitOnBegin: true, onBlockNumber: onB, onError: onE });
     return () => { un(); (ws.transport as any).getRpcClient?.().then((c: any) => c.close?.()).catch(() => {}); }; } : undefined,
-  pollHttp: async () => { const c = rpcRot[rpcI % rpcRot.length]; try { return await c.getBlockNumber({ cacheTime: 0 }); } catch (e) { rpcI++; throw e; } },
+  pollHttp: async () => pub.getBlockNumber({ cacheTime: 0 }),
   onBlock: (n, via) => { feed = via; void onBlock(n); }, note,
 });
 const engStatus = (E: Engine) => ({ live: E.live, vaultState: E.vaultState, vault: E.vault, tick: E.tick, waiting: E.waiting, halted: E.st.halted, txs: E.txs, open: E.book.orders.length, openIds: E.book.orders.map(o => o.id),
@@ -246,7 +249,7 @@ setInterval(() => {   // heartbeat; wake / clock-jump detection; stuck-handler k
   if (dWall > 6_000 || Math.abs(dWall - dMono) > 3_000) { wakes++; note(`wake/clock jump: wall +${(dWall / 1000).toFixed(1)}s mono +${(dMono / 1000).toFixed(1)}s -> resync, reload nonce, reconcile`); nonce = -1; for (const e of engines()) e.needReconcile = true; feedObj.resync('wake'); }
   for (const e of engines()) if (e.busySince && wall - e.busySince > STRATEGY.busyKillS * 1000) { note(`${e.name} block handler stuck ${((wall - e.busySince) / 1000).toFixed(0)}s: exiting for a clean supervisor restart`); setTimeout(() => process.exit(3), 200); }
   const age = (wall - lastBlockAt) / 1000, E = v5;
-  writeFileSync(STATUS, JSON.stringify({ at: new Date().toISOString(), startedAt, wantLive: WANT_LIVE, keeper: account?.address ?? null, head: String(head), feed, wsUp: feedObj.wsUp, wsReconnects: feedObj.wsReconnects, lease: leaseStatus(),
+  writeFileSync(STATUS, JSON.stringify({ at: new Date().toISOString(), startedAt, wantLive: WANT_LIVE, keeper: account?.address ?? null, head: String(head), feed, wsUp: feedObj.wsUp, wsReconnects: feedObj.wsReconnects, lease: leaseStatus(), rpc: pool.status(),
     gasGwei: Number(gasPrice) / 1e9, blockAgeS: age, stale: age > STRATEGY.staleNoNewS, staleWarn: age > STRATEGY.staleWarnS, wakes, tipGwei: TIP_GWEI,
     ...(E ? engStatus(E) : { live: false, vault: null }), strategy: STRATEGY, v6: v6Status(), log: log.slice(-10) }, null, 1));
 }, 2_000);
@@ -260,7 +263,7 @@ const adoptInto = (E: Engine, b: any, from: string) => { if (!b || !Array.isArra
   if (b.day === E.st.day || !E.st.day) { E.st.day = b.day; E.st.dayPnl = b.dayPnl ?? E.st.dayPnl; E.st.dayGas = b.dayGas ?? E.st.dayGas; } E.needReconcile = true; E.save(); note(`${E.name === 'v6' ? '[v6] ' : ''}lease: adopted book from ${from} (${E.book.orders.length} open)`); };
 const leaseHooks = {
   note,
-  snapshot: () => ({ ...(v5 ? snap(v5) : {}), v6: v6 ? { vault: v6.vault, state: v6Status().state, ...snap(v6) } : { state: v6State, vault: v6Vault } }),
+  snapshot: () => ({ ...(v5 ? snap(v5) : {}), rpc: { active: pool.status().active, switches: pool.switches, down: pool.status().endpoints.filter(e => !e.up).map(e => e.name) }, v6: v6 ? { vault: v6.vault, state: v6Status().state, ...snap(v6) } : { state: v6State, vault: v6Vault } }),
   adopt: (b: any, from: string) => { if (!b) return; if (v5 && Array.isArray(b.orders)) adoptInto(v5, b, from);
     if (b.v6) { if (v6 && (!b.v6.vault || String(b.v6.vault).toLowerCase() === v6.vault.toLowerCase())) adoptInto(v6, b.v6, from); else if (!v6) adopt6 = b.v6; } },
 };

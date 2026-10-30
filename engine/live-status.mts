@@ -5,16 +5,19 @@
  * env: QN_HTTP (optional, read-only RPC secret; falls back to the public RPC), GH_TOKEN + LEASE_COMMENT_ID (lease read),
  *      OUT_DIR, PREV (previous status.json for incremental action history), RUN_FOR_S, TICK_S.
  */
-import { createPublicClient, http, parseAbi, decodeEventLog, decodeFunctionData, type Address } from 'viem';
+import { defaultPool } from './rpc-pool.mts';
+import { createPublicClient, http, custom, parseAbi, decodeEventLog, decodeFunctionData, type Address } from 'viem';
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { V4 } from './maker-v4-lib.mts';
 
 const VAULT = (process.env.VAULT ?? '0x1fEE5da5FEDa2656163a593Af70b84325B8e2958') as Address;
 const KEEPER = (process.env.KEEPER ?? '0x85c2bBcf6d7419740d01a60874BD3F85B2c96Fe2') as Address;
 const FUND = { block: 117674770n, nonce: 142, mon: 1100, weth: 0.0098, at: '2026-10-29T17:43:17Z' }; // owner funding tx 0x48eb2bf7…
-const PRIV = process.env.QN_HTTP || '', RPC = PRIV || 'https://rpc.monad.xyz', CHUNK = PRIV ? 1000n : 100n;
+// RPC failsafe: QuickNode first, then public Monad RPCs (engine/rpc-pool.mts); 100-block getLogs chunks work on every endpoint
+const pool = defaultPool(process.env.QN_HTTP || undefined, { note: (m: string) => console.log(m) }), CHUNK = 100n;
+void pool.probe(); setInterval(() => { void pool.probe(); }, 15_000).unref();
 const OUT = process.env.OUT_DIR ?? 'site', TICK_S = Number(process.env.TICK_S ?? 30), RUN_FOR_S = Number(process.env.RUN_FOR_S ?? 0);
-const c = createPublicClient({ transport: http(RPC, { retryCount: 2, timeout: 10_000 }) });
+const c = createPublicClient({ transport: custom({ request: ({ method, params }) => pool.request(method, params) }, { retryCount: 1 }) });
 const redact = (e: unknown) => String((e as any)?.shortMessage ?? (e as any)?.message ?? e).replace(/https?:\/\/\S+|wss?:\/\/\S+/g, '<rpc>').slice(0, 160);
 const vAbi = parseAbi(['function snapshot() view returns (bool,bool,int24,uint160,uint256,uint256,uint256[])',
   'event Placed(uint256 indexed tokenId, int24 tickLower, bool sellMon, uint128 liquidity, uint256 amountMax)', 'event Closed(uint256 indexed tokenId, uint256 mon, uint256 weth)']);
@@ -150,6 +153,7 @@ async function once() {
     pnl: { vsFundingAtSpotMon: valueMon - fundValueNow, partial: unknown > 0, note: 'vault value now minus the net owner deposits (1,100 MON + 0.0098 WETH at 17:43 UTC plus any later deposits or withdrawals), all at current pool spot (= P&L vs simply holding); includes gas already paid' },
     gas: { sinceFundingMon: gasSince, todayUtcMon: gasToday, keeperDayGasMon: (ls as any)?.book?.dayGas ?? null, txsSinceFunding: keeperActs.length, revertsSinceFunding: keeperActs.filter(a => !a.ok).length },
     config: (ls as any)?.book?.cfg ?? null,
+    rpc: { keeper: (ls as any)?.book?.rpc ?? null, publisher: pool.status().active },
     keeperDay: (ls as any)?.book ? { day: (ls as any).book.day, dayPnlMon: (ls as any).book.dayPnl, sidePaused: (ls as any).book.sidePaused } : null,
     leader: ls ? { holder: (ls as any).holder, role: (ls as any).role, released: (ls as any).released, leaseAgeS: lAge, healthy: lAge !== null && lAge <= 60 && !(ls as any).released, error: (ls as any).error } : null,
     standby: 'box copy polls the lease every 5 s and takes over if it is > 60 s stale', runs: rn, lastKeeperTx: lastAct,

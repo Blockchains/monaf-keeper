@@ -2,7 +2,7 @@ import { test } from 'node:test'; import assert from 'node:assert/strict'; impor
 // the lane is a 2-line mutex; test the same construction the keeper uses (importing the keeper would start it)
 const src = readFileSync(new URL('./maker-keeper-v4.mts', import.meta.url), 'utf8');
 test('keeper: one nonce lane wraps every send, V6 order has tickUpper', async () => {
-  assert.match(src, /return inLane\(async \(\) => \{/); assert.equal((src.match(/sendRawTransaction/g) ?? []).length, 1);
+  assert.match(src, /return inLane\(async \(\) => \{/); assert.equal((src.match(/pool\.broadcast\(raw\)/g) ?? []).length, 1); assert.doesNotMatch(src, /sendRawTransaction/);
   assert.match(src, /tickUpper: a\.lower \+ \(a\.w \?\? 1\)/);
   let lane: Promise<unknown> = Promise.resolve(); const inLane = <T,>(f: () => Promise<T>) => { const r = lane.then(f, f); lane = r.catch(() => {}); return r; };
   let inside = 0, max = 0; const order: number[] = [];

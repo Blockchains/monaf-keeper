@@ -61,11 +61,11 @@ export function makeDiscovery(pub: any, c: V6Cfg, keeper?: string) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   process.on('uncaughtException', e => { console.log('v6: error ' + String((e as any)?.shortMessage ?? (e as any)?.message ?? e).replace(/https?:\/\/\S+|wss?:\/\/\S+/g, '<rpc>').slice(0, 120)); process.exit(1); });
   process.on('unhandledRejection', e => { console.log('v6: error ' + String((e as any)?.shortMessage ?? (e as any)?.message ?? e).replace(/https?:\/\/\S+|wss?:\/\/\S+/g, '<rpc>').slice(0, 120)); process.exit(1); });
-  const { createPublicClient, http } = await import('viem');
+  const { createPublicClient, custom } = await import('viem'); const { defaultPool } = await import('./rpc-pool.mts');
   const c = loadV6Cfg(), st = gateState(c);
   if (st === 'off') { console.log('v6: off (maker-pools.json mon-usdc-v6: enabled/autoEnable false, or MAKER_V6=0)'); process.exit(0); }
-  const url = process.env.QN_HTTP; if (!url) { console.log('v6: no RPC (QN_HTTP)'); process.exit(1); }
-  const pub = createPublicClient({ transport: http(url, { retryCount: 4, timeout: 10_000 }) });
+  const pool = defaultPool(process.env.QN_HTTP || undefined); // QuickNode first, public Monad RPCs on quota/timeout
+  const pub = createPublicClient({ transport: custom({ request: ({ method, params }) => pool.request(method, params) }, { retryCount: 3 }) });
   if (st === 'fixed') { const g = await checkV6(pub, c.vault!, c); console.log(g.ok ? `v6: vault ok ${c.vault} active=${g.active} paused=${g.paused}` : `v6: REFUSE ${c.vault} ${g.bad.join(',')}`); process.exit(g.ok ? 0 : 1); }
   const d = makeDiscovery(pub, c), f = await d.step();
   console.log(f ? `v6: discovered ${f.addr} (owner nonce ${f.nonce}) - gate ok` : `v6: awaiting deploy (owner nonces ${c.discoverFromNonce}..${d.next - 1} scanned, no gated V6)${d.rejected.length ? ` rejected ${d.rejected.map(r => r.addr + ':' + r.bad.join('/')).join(' ')}` : ''}`); process.exit(0);
