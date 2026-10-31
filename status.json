@@ -1,0 +1,3279 @@
+{
+ "at": "2026-10-31T15:04:24.695Z",
+ "block": "118215317",
+ "vault": "0x1fEE5da5FEDa2656163a593Af70b84325B8e2958",
+ "keeper": "0x85c2bBcf6d7419740d01a60874BD3F85B2c96Fe2",
+ "active": true,
+ "paused": false,
+ "tick": -116706,
+ "spotMonPerWeth": 117000.1365277381,
+ "gasGwei": 102,
+ "idle": {
+  "mon": 413.23575088951753,
+  "weth": 0.001443592202431336
+ },
+ "orders": [
+  {
+   "id": "643966",
+   "side": "bid",
+   "kind": "fresh",
+   "range": [
+    -116732,
+    -116731
+   ],
+   "widthTicks": 1,
+   "ticksFromSpot": -25,
+   "trades": "bid",
+   "mon": 0,
+   "weth": 0.0037147748707177133,
+   "valueMon": 434.62916704378307,
+   "fillPct": 0,
+   "heldAsExit": false,
+   "placedAt": "2026-10-31T14:48:16.114Z",
+   "startAsset": "WETH",
+   "startAmt": 0.0037147748707177133
+  }
+ ],
+ "totals": {
+  "mon": 413.23575088951753,
+  "weth": 0.00515836707314905,
+  "valueMon": 1016.7654027081451
+ },
+ "funding": {
+  "netMon": 1100,
+  "netWeth": 0.020696,
+  "valueAtSpotMon": 3521.4348255780674,
+  "flows": [
+   {
+    "t": "2026-10-29T17:43:17Z",
+    "tx": "0x48eb2bf721a80cd3287ca2a36d0595e132ed243e82ee5e86aa48350b61655b4f",
+    "mon": 1100,
+    "weth": 0.0098
+   },
+   {
+    "t": "2026-10-29T21:04:14.000Z",
+    "tx": "0x1d4de434ecc1eb686e973b55881eed95cbeca8688909856803f626588f39aa42",
+    "mon": 0,
+    "weth": 0.0098
+   },
+   {
+    "t": "2026-10-29T23:09:39.000Z",
+    "tx": "0x281b95844806a5005ea7171ec14710c786642aab55b9d47a846276f73c504de6",
+    "mon": 0,
+    "weth": 0.001
+   },
+   {
+    "t": "2026-10-30T18:02:50.000Z",
+    "tx": "0xd7869943bbd5c4ebc0494eaf4c2317f86dc96777f999ed6e83aef51506a631a2",
+    "mon": 0,
+    "weth": 0.000096
+   }
+  ]
+ },
+ "pnl": {
+  "vsFundingAtSpotMon": -2504.6694228699225,
+  "partial": false,
+  "note": "vault value now minus the net owner deposits (1,100 MON + 0.0098 WETH at 17:43 UTC plus any later deposits or withdrawals), all at current pool spot (= P&L vs simply holding); includes gas already paid"
+ },
+ "gas": {
+  "sinceFundingMon": 15.932565218375915,
+  "todayUtcMon": 3.0850505100000003,
+  "keeperDayGasMon": 3.0850505100000003,
+  "txsSinceFunding": 321,
+  "revertsSinceFunding": 10
+ },
+ "config": {
+  "geo": {
+   "offset": 7,
+   "width": 1,
+   "spacing": 1,
+   "clamped": true
+  },
+  "recentreTicks": 8,
+  "recentreMin": 30,
+  "size": [
+   300,
+   500
+  ]
+ },
+ "rpc": {
+  "keeper": {
+   "active": "quicknode",
+   "switches": 4,
+   "down": []
+  },
+  "publisher": "quicknode"
+ },
+ "keeperDay": {
+  "day": "2026-10-31",
+  "dayPnlMon": -2.7047180634033907,
+  "sidePaused": {
+   "ask": false,
+   "bid": false
+  }
+ },
+ "leader": {
+  "holder": "actions-41208468352-1",
+  "role": "primary",
+  "released": false,
+  "leaseAgeS": 9,
+  "healthy": true
+ },
+ "standby": "box copy polls the lease every 5 s and takes over if it is > 60 s stale",
+ "runs": [
+  {
+   "id": 41208468352,
+   "status": "in_progress",
+   "conclusion": null,
+   "created": "2026-10-31T14:04:59Z",
+   "url": "https://github.com/Blockchains/monaf-keeper/actions/runs/41208468352"
+  },
+  {
+   "id": 41203012649,
+   "status": "completed",
+   "conclusion": "cancelled",
+   "created": "2026-10-31T12:52:18Z",
+   "url": "https://github.com/Blockchains/monaf-keeper/actions/runs/41203012649"
+  },
+  {
+   "id": 41183786262,
+   "status": "completed",
+   "conclusion": "success",
+   "created": "2026-10-31T08:14:35Z",
+   "url": "https://github.com/Blockchains/monaf-keeper/actions/runs/41183786262"
+  }
+ ],
+ "lastKeeperTx": "2026-10-31T14:48:15.000Z",
+ "v6": {
+  "state": "awaiting deploy",
+  "vault": null,
+  "orders": [],
+  "config": null,
+  "day": null,
+  "dayPnlMon": null,
+  "dayGasMon": null,
+  "sidePaused": null
+ },
+ "alerts": [],
+ "actions": [
+  {
+   "t": "2026-10-31T14:48:15.000Z",
+   "block": "118212111",
+   "tx": "0x54389c322f7635437fa992228a1d1896046ded4bb8ef32097e81cfc56e311372",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.074212818,
+   "detail": "close #643961 -> 0.337718 MON + 0.0028766 WETH; place bid #643966 [-116732,-116731) max 0.0037148 WETH"
+  },
+  {
+   "t": "2026-10-31T14:04:24.000Z",
+   "block": "118203398",
+   "tx": "0x54171a4477da86da73e54df735549d715d912c89eebc821353b596b08bb5a84a",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0628051635,
+   "detail": "close #643955 -> 337.735 MON + 0.0000028753 WETH; place ask #643961 [-116750,-116749) max 337.55 MON"
+  },
+  {
+   "t": "2026-10-31T13:09:25.000Z",
+   "block": "118192470",
+   "tx": "0xd7aeed117fb0ab5f85ee56de6ebf249c57cab64fa41a3ec39c970490945c9bf1",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.064155783,
+   "detail": "close #643950 -> 337.583 MON + 0.0000028890 WETH; place ask #643955 [-116740,-116739) max 337.40 MON"
+  },
+  {
+   "t": "2026-10-31T12:39:24.000Z",
+   "block": "118186510",
+   "tx": "0x734c4c4e070783a893046bb010aca79f91f337e5ad8aec32fb1f94823d96cf98",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.062866368,
+   "detail": "close #643948 -> 337.583 MON + 0.0000028919 WETH; place ask #643950 [-116688,-116687) max 337.25 MON"
+  },
+  {
+   "t": "2026-10-31T12:02:31.000Z",
+   "block": "118179181",
+   "tx": "0xe6049cc5bffe697de2fb808864b5fce39e197e16d7ada2bd0703801fc25fa47a",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.042551097,
+   "detail": "place ask #643948 [-116678,-116677) max 337.25 MON"
+  },
+  {
+   "t": "2026-10-31T12:02:20.000Z",
+   "block": "118179144",
+   "tx": "0xd83226ff4d884741193ddbcbd8cfe769e3f188a67bfdeb9d99f9e9f39eb56b23",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033956538,
+   "detail": "close #643943 -> 499.367 MON + 0.000010694 WETH"
+  },
+  {
+   "t": "2026-10-31T11:00:36.000Z",
+   "block": "118166885",
+   "tx": "0x786b9a271a8b6f1c91969074475ca2568c604b21bbc142e6a1e0178ade74b9e9",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.069687705,
+   "detail": "close #643942 -> 0.00000 MON + 0.0035892 WETH; place bid #643943 [-116658,-116657) max 0.0042756 WETH"
+  },
+  {
+   "t": "2026-10-31T10:34:44.000Z",
+   "block": "118161744",
+   "tx": "0xc48faadfb862c43979a93e4930e094b13434ac2df878d7f7ce51c6f955af619c",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033968799,
+   "detail": "close #643941 -> 0.102565 MON + 0.0017588 WETH"
+  },
+  {
+   "t": "2026-10-31T10:30:36.000Z",
+   "block": "118160925",
+   "tx": "0x05b757b3dbb3cbe83699d4c69f23ef0723188a3722f3ceb2358009c89766f5cf",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.084230055,
+   "detail": "place ask #643941 [-116654,-116653) max 204.52 MON; place bid #643942 [-116670,-116669) max 0.0035892 WETH"
+  },
+  {
+   "t": "2026-10-31T10:30:26.000Z",
+   "block": "118160892",
+   "tx": "0x670dd07e4959f389b0af7a365ec84481663f213bed4122d96ddaf94cc04158f5",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033958146,
+   "detail": "close #643938 -> 0.237235 MON + 0.0040612 WETH"
+  },
+  {
+   "t": "2026-10-31T10:02:39.000Z",
+   "block": "118155372",
+   "tx": "0xa2efd70fc3ecfcd1bf916d717a37babf9708bbf58ac6917ce9beb993e4445303",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339916125,
+   "detail": "close #643939 -> 204.374 MON + 8.7572e-7 WETH"
+  },
+  {
+   "t": "2026-10-31T09:32:28.000Z",
+   "block": "118149377",
+   "tx": "0x87f2cbffb3909feb6338f8c13d85f5e32c11d0d948130701ab4bfbae69fc0847",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0628932015,
+   "detail": "close #643934 -> 204.476 MON + 0.0000017530 WETH; place ask #643939 [-116679,-116678) max 204.27 MON"
+  },
+  {
+   "t": "2026-10-31T09:28:01.000Z",
+   "block": "118148494",
+   "tx": "0x906d657a71cb30b31d3936fbe4dda72fb51af19e22890f4e8202e863d7a27c9d",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057133647,
+   "detail": "place bid #643938 [-116691,-116690) max 0.0040592 WETH"
+  },
+  {
+   "t": "2026-10-31T09:06:06.000Z",
+   "block": "118144140",
+   "tx": "0x895f2c0028adb288bd9cc5772dd7428162ec01943c739ee32750d5dd1e8fa90d",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0307671705,
+   "detail": "close #643919 -> 0.00000 MON + 0.0031832 WETH"
+  },
+  {
+   "t": "2026-10-31T08:54:06.000Z",
+   "block": "118141753",
+   "tx": "0x5992bf8d83992ab5e07bbc2c4f8bdb9cef1995a39dbb68715918553a5c737722",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404853195,
+   "detail": "place ask #643934 [-116670,-116669) max 204.27 MON"
+  },
+  {
+   "t": "2026-10-31T08:32:32.000Z",
+   "block": "118137467",
+   "tx": "0xf2f0e78792a8b33b223e03c1e5251ff09f21c6b5b56201bccae5ff4afa5369e9",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0583660785,
+   "detail": "close #643895 -> 371.403 MON + 0.0000 WETH; place ask #643919 [-116683,-116682) max 371.40 MON"
+  },
+  {
+   "t": "2026-10-31T08:02:31.000Z",
+   "block": "118131511",
+   "tx": "0xa1bc36d02a865383ed15c85dedfc3e743f3bd123ba85392c03b17d35dd1a01e1",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0583568325,
+   "detail": "close #643894 -> 371.403 MON + 0.0000 WETH; place ask #643895 [-116659,-116658) max 371.40 MON"
+  },
+  {
+   "t": "2026-10-31T07:32:30.000Z",
+   "block": "118125576",
+   "tx": "0x63a64099ab74db42ebfcd68b4a0d27b3976a16efd7cd5ff2ce1aa416fbe7e6c0",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0583622595,
+   "detail": "close #643885 -> 500.000 MON + 0.0000 WETH; place ask #643894 [-116633,-116632) max 371.40 MON"
+  },
+  {
+   "t": "2026-10-31T07:08:59.000Z",
+   "block": "118120909",
+   "tx": "0x5143bc6797d91ae3358f726bfbcc45a5e720cdce47a5320c5bf3b36cb2c0e2c7",
+   "kind": "owner tx",
+   "ok": true,
+   "gasMon": 0.00688143,
+   "detail": ""
+  },
+  {
+   "t": "2026-10-31T07:02:30.000Z",
+   "block": "118119621",
+   "tx": "0xd4fcd3883d077324c2ac023395dedcaa0d30d9d03fa47274939aaf8dc92a77db",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0628716945,
+   "detail": "close #643878 -> 500.250 MON + 0.0000021640 WETH; place ask #643885 [-116602,-116601) max 500.00 MON"
+  }
+ ],
+ "allActions": [
+  {
+   "t": "2026-10-29T17:43:17.000Z",
+   "block": "117674770",
+   "tx": "0x48eb2bf721a80cd3287ca2a36d0595e132ed243e82ee5e86aa48350b61655b4f",
+   "kind": "owner tx",
+   "ok": true,
+   "gasMon": 0.005208834,
+   "detail": ""
+  },
+  {
+   "t": "2026-10-29T17:45:05.000Z",
+   "block": "117675130",
+   "tx": "0x5d13ee141b63a8b7903d22c132b489bfb647d9c41e46b486f485c105d949be28",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.072249048,
+   "detail": "place ask #643209 [-116295,-116294) max 495.00 MON; place bid #643210 [-116297,-116296) max 0.0088200 WETH"
+  },
+  {
+   "t": "2026-10-29T18:00:06.000Z",
+   "block": "117678111",
+   "tx": "0x23075312f0bb446fe55d81cdf489fc3b53aa7dc88b3d9c460435118bb157f77f",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0539551335,
+   "detail": "close #643209 -> 495.247 MON + 0.0000022052 WETH; place ask #643215 [-116346,-116345) max 272.25 MON"
+  },
+  {
+   "t": "2026-10-29T18:15:07.000Z",
+   "block": "117681094",
+   "tx": "0x0747df2b3046b09ace23f88971e9c55a6f5c5fd46eb0a218256721cd00ce6e3a",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0539842785,
+   "detail": "close #643215 -> 272.390 MON + 0.0000012067 WETH; place ask #643218 [-116395,-116394) max 372.60 MON"
+  },
+  {
+   "t": "2026-10-29T20:43:16.000Z",
+   "block": "117710521",
+   "tx": "0xcb59a169671c994e866c26c6be58b1442fb18ab602f952c5822cc9a504ab31a7",
+   "kind": "REVERTED",
+   "ok": false,
+   "gasMon": 0.06358738578294736,
+   "detail": "reverted (no events; Monad bills the full gas limit)"
+  },
+  {
+   "t": "2026-10-29T21:24:31.000Z",
+   "block": "117718709",
+   "tx": "0x6edf13657fd52c4cbadb4112a1bd21707f237f98c4eadc80e0a28d67d8ce2628",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0969578775,
+   "detail": "close #643210 -> 991.119 MON + 0.0000 WETH; close #643218 -> 372.779 MON + 0.0000015710 WETH; place ask #643274 [-116642,-116641) max 425.04 MON; place bid #643275 [-116644,-116643) max 0.0032086 WETH"
+  },
+  {
+   "t": "2026-10-29T21:24:58.000Z",
+   "block": "117718798",
+   "tx": "0x4b1ccfe2945684075e147856ff09c309b6b6b7647d273dca9c0b6a2b3904bbf7",
+   "kind": "REVERTED",
+   "ok": false,
+   "gasMon": 0.0490388745,
+   "detail": "reverted (no events; Monad bills the full gas limit)"
+  },
+  {
+   "t": "2026-10-29T21:25:07.000Z",
+   "block": "117718831",
+   "tx": "0xfdf0607d84f7155c460fdb477ea470a65f24e8248f345b3d87921b8b8e303a3a",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0490434975,
+   "detail": "place bid #643276 [-116653,-116652) max 0.0031563 WETH"
+  },
+  {
+   "t": "2026-10-29T21:25:36.000Z",
+   "block": "117718924",
+   "tx": "0x7e51c3d2673c605579d289fe35054eedb60f423eb28174f93b54a4d75fc5fd2d",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.034730187,
+   "detail": "place ask #643278 [-116625,-116624) max 452.94 MON"
+  },
+  {
+   "t": "2026-10-29T21:25:55.000Z",
+   "block": "117718990",
+   "tx": "0xad300217074f42a7b5867d5987ceca0fec024204dc43aa671b9c59815b21e7c3",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.051187263,
+   "detail": "close #643274 -> 0.00000 MON + 0.0036578 WETH; place ask #643279 [-116613,-116612) max 412.92 MON"
+  },
+  {
+   "t": "2026-10-29T21:30:38.000Z",
+   "block": "117719926",
+   "tx": "0x41d83683fd611cef0d96d41fde1b2579874608cf1dbc5cc0fa6aab21c11e5814",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029144598,
+   "detail": "close #643278 -> 0.226584 MON + 0.0039065 WETH"
+  },
+  {
+   "t": "2026-10-29T21:30:45.000Z",
+   "block": "117719949",
+   "tx": "0x7ef3af5e1e29cda73ff92960966e5bb9350371fa75101ef6650e0f75d771a204",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0347369205,
+   "detail": "place ask #643282 [-116593,-116592) max 360.83 MON"
+  },
+  {
+   "t": "2026-10-29T21:30:51.000Z",
+   "block": "117719969",
+   "tx": "0x32f7367c7b1b7587821142fb2c50d13786c45c3214265967bc9a142fccfec808",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.051195303,
+   "detail": "close #643279 -> 0.00000 MON + 0.0035639 WETH; place ask #643283 [-116586,-116585) max 198.46 MON"
+  },
+  {
+   "t": "2026-10-29T21:32:47.000Z",
+   "block": "117720354",
+   "tx": "0x02d14b1302d3711930502afc6f4499500cf25918ef14b6b9ed695fd702de71fb",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029151231,
+   "detail": "close #643282 -> 0.180504 MON + 0.0031220 WETH"
+  },
+  {
+   "t": "2026-10-29T21:32:50.000Z",
+   "block": "117720362",
+   "tx": "0xc73eda88dc54cf89eb810506f065003add19f709144afdf2be9f0c0732c9e518",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029154648,
+   "detail": "close #643283 -> 0.0992771 MON + 0.0017183 WETH"
+  },
+  {
+   "t": "2026-10-29T21:44:32.000Z",
+   "block": "117722688",
+   "tx": "0xd4512a3e2d46d2ef9c87f05f3ea1c6c4d8a68e982b138acb3a9019b1347fba3c",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029169522,
+   "detail": "close #643275 -> 373.664 MON + 0.0000032102 WETH"
+  },
+  {
+   "t": "2026-10-29T21:44:42.000Z",
+   "block": "117722721",
+   "tx": "0xe7f3df291eb1e67f4213c06845895826766398ecbaa4c25f93ac174cd8913c0e",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.070521654,
+   "detail": "place ask #643292 [-116669,-116668) max 277.43 MON; place bid #643293 [-116671,-116670) max 0.0039156 WETH"
+  },
+  {
+   "t": "2026-10-29T21:47:09.000Z",
+   "block": "117723209",
+   "tx": "0xb3d39d21552607104f8e6323cdb7058b6fea99dd60d06671d0ab27d6e4a116cf",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029159874,
+   "detail": "close #643276 -> 368.085 MON + 0.0000047456 WETH"
+  },
+  {
+   "t": "2026-10-29T21:47:19.000Z",
+   "block": "117723240",
+   "tx": "0x6be927251403e16e4d2d95dca53c63236663bdb5ffebed5fb1f199e107613b09",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0490434975,
+   "detail": "place bid #643294 [-116683,-116682) max 0.0038038 WETH"
+  },
+  {
+   "t": "2026-10-29T21:48:13.000Z",
+   "block": "117723421",
+   "tx": "0x57f8d546f4c6ae15f1ef48b40c46c3717f1623b95244807213d2caec7f83dcfb",
+   "kind": "REVERTED",
+   "ok": false,
+   "gasMon": 0.0626079825,
+   "detail": "reverted (no events; Monad bills the full gas limit)"
+  },
+  {
+   "t": "2026-10-29T21:48:14.000Z",
+   "block": "117723423",
+   "tx": "0x52ef69c2026c130a98586eaf0d76b18ad1afa8eb422043893703f2475fbd381c",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0626126055,
+   "detail": "close #643293 -> 457.002 MON + 0.0000019588 WETH; place bid #643295 [-116700,-116699) max 0.0035062 WETH"
+  },
+  {
+   "t": "2026-10-29T21:49:19.000Z",
+   "block": "117723639",
+   "tx": "0x521b0d2388896bcaf1088e8bf2cd6640a637a2dd208239ae57ea22d24a0e80b7",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0606293385,
+   "detail": "close #643294 -> 444.256 MON + 0.0000 WETH; place bid #643298 [-116710,-116709) max 0.0032309 WETH"
+  },
+  {
+   "t": "2026-10-29T21:49:20.000Z",
+   "block": "117723642",
+   "tx": "0x146c7e1334a15a89d392018d4b72efc944d967e9b0c067348c7ea9293732e05a",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.053947596,
+   "detail": "close #643292 -> 277.564 MON + 0.0000011905 WETH; place ask #643299 [-116709,-116708) max 446.11 MON"
+  },
+  {
+   "t": "2026-10-29T21:50:45.000Z",
+   "block": "117723922",
+   "tx": "0x8b6a0fc8524882c43ecf82c1b7ac53f2ed38f799e1aee82ff4ac4b226f9a742e",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0347437545,
+   "detail": "place ask #643301 [-116707,-116706) max 434.86 MON"
+  },
+  {
+   "t": "2026-10-29T21:51:55.000Z",
+   "block": "117724154",
+   "tx": "0x65e4e8c892d7671c1464427f4d3e89fa7183c52025858fec651d303a685d6199",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.041059275,
+   "detail": "close #643295 -> 410.197 MON + 0.0000 WETH; close #643298 -> 378.558 MON + 0.0000016163 WETH"
+  },
+  {
+   "t": "2026-10-29T21:52:05.000Z",
+   "block": "117724187",
+   "tx": "0xe3722cb8ed7a9d54cc6ab906440d0730e69607b7143e179768e5b3e8a9dc5c82",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0490131465,
+   "detail": "place bid #643302 [-116742,-116741) max 0.0030169 WETH"
+  },
+  {
+   "t": "2026-10-29T21:53:13.000Z",
+   "block": "117724414",
+   "tx": "0x17e2108931e3101cbce1c1042c8de301061a61f167e79890bb894a917eb88aeb",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0490099305,
+   "detail": "place bid #643304 [-116745,-116744) max 0.0026352 WETH"
+  },
+  {
+   "t": "2026-10-29T22:18:53.000Z",
+   "block": "117729512",
+   "tx": "0x6c16115163471e4bb18ac2dc132390e5051e40bfa8a6cb9c288e137bb35ddc48",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.041779056,
+   "detail": "close #643299 -> 1.11583 MON + 0.0038231 WETH; close #643301 -> 0.870144 MON + 0.0037255 WETH"
+  },
+  {
+   "t": "2026-10-29T22:19:02.000Z",
+   "block": "117729544",
+   "tx": "0x79d512c70ea1b5cd937b923bc0a979d9ac46c6052c7a01d88756a423447b72c3",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.034732197,
+   "detail": "place ask #643313 [-116674,-116673) max 432.51 MON"
+  },
+  {
+   "t": "2026-10-29T22:21:12.000Z",
+   "block": "117729975",
+   "tx": "0xdea0aa41e45e57fc64f70b062b88636e20a3b7af206cf5d682ec7b35779df342",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.034749081,
+   "detail": "place ask #643315 [-116669,-116668) max 419.72 MON"
+  },
+  {
+   "t": "2026-10-29T22:22:05.000Z",
+   "block": "117730150",
+   "tx": "0xab94a2e7e2d25bbd134169b842247545f639d661cc305ec838452864c8155d79",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029127915,
+   "detail": "close #643302 -> 0.914702 MON + 0.0030247 WETH"
+  },
+  {
+   "t": "2026-10-29T22:23:14.000Z",
+   "block": "117730377",
+   "tx": "0x9194a54c2f58eaa021bd17d7e9d16c02edf8cc1ada19b78483824d6bc3630335",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.06372705,
+   "detail": "close #643304 -> 0.929069 MON + 0.0026431 WETH; place bid #643317 [-116703,-116702) max 0.0036167 WETH"
+  },
+  {
+   "t": "2026-10-29T22:24:07.000Z",
+   "block": "117730553",
+   "tx": "0x24ce6092292d9be72de17a5be28323ad24cda6cc11c73b06a451c6500f020e21",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0490491255,
+   "detail": "place bid #643319 [-116711,-116710) max 0.0034860 WETH"
+  },
+  {
+   "t": "2026-10-29T22:30:13.000Z",
+   "block": "117731767",
+   "tx": "0x67d66fc846ac9d1f8532d695b6ca846385fcb726e1e6e8b6fed84796da6c3511",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.062663961,
+   "detail": "close #643317 -> 424.104 MON + 0.0000072371 WETH; place bid #643325 [-116731,-116730) max 0.0031463 WETH"
+  },
+  {
+   "t": "2026-10-29T22:32:09.000Z",
+   "block": "117732150",
+   "tx": "0xcd380f633083a6804b6b4409abfd4f1c00c203541dcbc24ba11a49ed572138ac",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0435537855,
+   "detail": "close #643315 -> 419.926 MON + 0.0000018011 WETH; close #643325 -> 0.184618 MON + 0.0031479 WETH"
+  },
+  {
+   "t": "2026-10-29T22:36:36.000Z",
+   "block": "117733034",
+   "tx": "0x2ccc2b54e87c3ea2efa02beb226d4049d98bfb18a000ab0414f097bd74dcb283",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0625963245,
+   "detail": "close #643313 -> 432.723 MON + 0.0000018551 WETH; place bid #643328 [-116721,-116720) max 0.0025584 WETH"
+  },
+  {
+   "t": "2026-10-29T22:38:20.000Z",
+   "block": "117733379",
+   "tx": "0x5f3084344672d2d09feafea46441182bd296b2f07d39c38e8f2bb4e643c9adba",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.062602053,
+   "detail": "close #643319 -> 408.911 MON + 0.0000053791 WETH; place bid #643329 [-116730,-116729) max 0.0025470 WETH"
+  },
+  {
+   "t": "2026-10-29T22:38:39.000Z",
+   "block": "117733441",
+   "tx": "0x9561a839029838afe850d641793ef9f3da9a86b3dda087ac5dcbf219607fe37a",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0264394395,
+   "detail": "close #643329 -> 0.00000 MON + 0.0025470 WETH"
+  },
+  {
+   "t": "2026-10-29T22:38:49.000Z",
+   "block": "117733474",
+   "tx": "0xf1847a7ebc47019854984e9796f5f5def7d3c572338697d77e8cf822e0b5a522",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.034737825,
+   "detail": "place ask #643330 [-116706,-116705) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-29T22:39:36.000Z",
+   "block": "117733631",
+   "tx": "0x32230504f0638c4850ba43ab1135be6542921bd946a7140451370e1280f13bde",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0253357485,
+   "detail": "close #643330 -> 499.999 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-29T22:39:45.000Z",
+   "block": "117733659",
+   "tx": "0x90bff5197338936d3ace09757e4de7366a505355ac6b1d99d888929c3575748f",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0490511355,
+   "detail": "place bid #643332 [-116730,-116729) max 0.0025470 WETH"
+  },
+  {
+   "t": "2026-10-29T22:39:57.000Z",
+   "block": "117733699",
+   "tx": "0xb6ecff56fe32c7a20deb8fa5ca84c235d846920fa65677d1f677cf944e69c0f8",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.051242739,
+   "detail": "close #643332 -> 0.00000 MON + 0.0025470 WETH; place ask #643333 [-116711,-116710) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-29T22:42:07.000Z",
+   "block": "117734130",
+   "tx": "0x9cb29535c3b26682ce6760b2263b0705fdb54d37eff31aba08ad648a21d892cd",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.060657981,
+   "detail": "close #643333 -> 500.000 MON + 0.0000 WETH; place bid #643334 [-116730,-116729) max 0.0025470 WETH"
+  },
+  {
+   "t": "2026-10-29T22:42:30.000Z",
+   "block": "117734207",
+   "tx": "0x629229415ff6dde395d02a3e9cb1c462ce81701c208c2525e52b58bdfd428e3f",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029154045,
+   "detail": "close #643328 -> 300.247 MON + 0.0000025597 WETH"
+  },
+  {
+   "t": "2026-10-29T22:47:17.000Z",
+   "block": "117735156",
+   "tx": "0xdec95fcb2194ebbd9e629089807789ec10682ef66e5e2fac9db0ce36dcfc5c18",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0291593715,
+   "detail": "close #643334 -> 298.877 MON + 3.7222e-8 WETH"
+  },
+  {
+   "t": "2026-10-29T22:47:27.000Z",
+   "block": "117735189",
+   "tx": "0x9f843c6dd7a4fe78489fe749b708dc5972f6521e0e05f447029d9cdb48c56b8f",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.036498183,
+   "detail": "place ask #643337 [-116755,-116754) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-29T22:48:21.000Z",
+   "block": "117735368",
+   "tx": "0x8310c4dd7619aae83222ad4f6e0b8c16e79a9023cff216083acd6a4d38e615e3",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0358363905,
+   "detail": "place ask #643338 [-116737,-116736) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-29T22:49:03.000Z",
+   "block": "117735507",
+   "tx": "0x6f87fb3433c817ee4e41ce5835a3522306c128d4fe7ebbbd588613afdf6d6222",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.026425872,
+   "detail": "close #643338 -> 499.999 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-29T22:56:40.000Z",
+   "block": "117737022",
+   "tx": "0x9c8ebc91dd5e6c9272a14668c7f937743017981a7fe9cb49d536dee6cf9b03b3",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0347142075,
+   "detail": "place ask #643345 [-116743,-116742) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-29T22:57:02.000Z",
+   "block": "117737095",
+   "tx": "0xbf52c7eec006f84ca03af70b9214b80fdc7e39593ca65fef003ec9a81d408e14",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.025312332,
+   "detail": "close #643345 -> 500.000 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-29T22:59:21.000Z",
+   "block": "117737556",
+   "tx": "0x432d456f771df6378a4cf7dee77c4cf3714dc27afd004062d225db4c87aaf4fa",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.034707474,
+   "detail": "place ask #643347 [-116740,-116739) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-29T23:06:09.000Z",
+   "block": "117738907",
+   "tx": "0x8049ec67df82ec9e971240d6607e6bebce97bd5169128d284f0a8d62a358f3f8",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029142789,
+   "detail": "close #643347 -> 500.279 MON + 0.0000023799 WETH"
+  },
+  {
+   "t": "2026-10-29T23:09:40.000Z",
+   "block": "117739604",
+   "tx": "0x625f02b8cea40a1a93d6ba81c314927c6ec1b25b50fb1468f25bfc6b3fb221e0",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0490195785,
+   "detail": "place bid #643352 [-116800,-116799) max 0.0020915 WETH"
+  },
+  {
+   "t": "2026-10-29T23:10:12.000Z",
+   "block": "117739711",
+   "tx": "0x203d6909c2891aac35ba8ffa87500944f403539e353b5fd232c9608c37de2021",
+   "kind": "REVERTED",
+   "ok": false,
+   "gasMon": 0.0258222630929548,
+   "detail": "reverted (no events; Monad bills the full gas limit)"
+  },
+  {
+   "t": "2026-10-29T23:12:59.000Z",
+   "block": "117740264",
+   "tx": "0xef9f7126df7d7bb03ab104d88de84ba4b7f61beea88b168041fee2c9fd6fe1ea",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0291561555,
+   "detail": "close #643352 -> 0.247148 MON + 0.0020936 WETH"
+  },
+  {
+   "t": "2026-10-29T23:13:09.000Z",
+   "block": "117740298",
+   "tx": "0x1323085298ad1dfca24c4a57efcc1c56239d755c5952604484355fe38b599b86",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0490207845,
+   "detail": "place bid #643355 [-116781,-116780) max 0.0020934 WETH"
+  },
+  {
+   "t": "2026-10-29T23:16:38.000Z",
+   "block": "117740987",
+   "tx": "0xe777f4dedce0c5e81a411aaef255f8208227de6efb03924f8287aeaad77116e2",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0253190655,
+   "detail": "close #643355 -> 246.901 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-29T23:17:28.000Z",
+   "block": "117741152",
+   "tx": "0xc18ed486cfb9fba9139331e9e1edd13e68210b18dfc9191943e7507e40b42730",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0539131245,
+   "detail": "close #643337 -> 500.750 MON + 0.0000063819 WETH; place ask #643360 [-116808,-116807) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-29T23:20:14.000Z",
+   "block": "117741703",
+   "tx": "0x653523bdf0594fe7cc6fef4135847bb73f71630f417d8a392a26d12a164fa30b",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0291239955,
+   "detail": "close #643360 -> 0.250125 MON + 0.0042342 WETH"
+  },
+  {
+   "t": "2026-10-29T23:20:31.000Z",
+   "block": "117741759",
+   "tx": "0xf46fb1ba01c8d7e195aff252027cb249c1faf664716da25c1cbe255e761bfee3",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0722368875,
+   "detail": "place ask #643363 [-116762,-116761) max 500.00 MON; place bid #643364 [-116778,-116777) max 0.0025348 WETH"
+  },
+  {
+   "t": "2026-10-29T23:23:43.000Z",
+   "block": "117742397",
+   "tx": "0xa337f99d1591e8af6aa7419024b4572c2483bf752ff2b208443235b353326dfa",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.025315749,
+   "detail": "close #643364 -> 298.873 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-29T23:50:32.000Z",
+   "block": "117747722",
+   "tx": "0x044eec372961e4bed4689d49b134cc8db134d68e8d04eb5c81ba02efbd5769c9",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.053919858,
+   "detail": "close #643363 -> 500.500 MON + 0.0000042516 WETH; place ask #643373 [-116811,-116810) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T00:20:33.000Z",
+   "block": "117753687",
+   "tx": "0x1f59fd54fb5d66886e86bc2bb5c765e9732d565036130b111f825b7b96222005",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0252923325,
+   "detail": "close #643373 -> 500.000 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T00:20:36.000Z",
+   "block": "117753696",
+   "tx": "0xea73250ed509d74b380bca18e463ebde8cf2e82b64426b214e34a893e9f138e7",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0365095395,
+   "detail": "place ask #643388 [-117016,-117015) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T00:30:08.000Z",
+   "block": "117755588",
+   "tx": "0x35850e3ab3dc2c525d9967c18fee0ba60d199d7e446e18ba16402d253d638e26",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.026385873,
+   "detail": "close #643388 -> 0.00000 MON + 0.0041450 WETH"
+  },
+  {
+   "t": "2026-10-30T00:30:18.000Z",
+   "block": "117755622",
+   "tx": "0x23da08454bea9f590d92d806a167d4e79e7596490938ca80c3e291d9353d8fc0",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.073398165,
+   "detail": "place ask #643393 [-116983,-116982) max 500.00 MON; place bid #643394 [-116999,-116998) max 0.0024794 WETH"
+  },
+  {
+   "t": "2026-10-30T00:32:12.000Z",
+   "block": "117755998",
+   "tx": "0xf3be47b869026ef697192be4770a79f7a15b94c4e3b6582e2b453b9cafe34137",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0291561555,
+   "detail": "close #643394 -> 299.023 MON + 0.0000012403 WETH"
+  },
+  {
+   "t": "2026-10-30T00:32:27.000Z",
+   "block": "117756047",
+   "tx": "0x327cffcbe797b18e39e6991153f0101074d8c1a2941e09828e76fd0e2f15b9ae",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.049030935,
+   "detail": "place bid #643395 [-117048,-117047) max 0.0024673 WETH"
+  },
+  {
+   "t": "2026-10-30T00:35:46.000Z",
+   "block": "117756705",
+   "tx": "0x7a1fc6e6371561f0eb534aa12cb805a9f0b106ef831046a1abb61fc03535d15f",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029153241,
+   "detail": "close #643393 -> 0.480945 MON + 0.0041627 WETH"
+  },
+  {
+   "t": "2026-10-30T00:35:56.000Z",
+   "block": "117756738",
+   "tx": "0x075a4fff9b22fd7f57ae8703b667041175cc2c7b8efd9351bc4075115866fa9c",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0347276745,
+   "detail": "place ask #643398 [-116944,-116943) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T00:51:49.000Z",
+   "block": "117759897",
+   "tx": "0xabc2f6c41b43d838f121510f27f32b13f019f6f21861038920a121aeead0a9c0",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0539653845,
+   "detail": "close #643398 -> 0.250445 MON + 0.0041770 WETH; place ask #643406 [-116909,-116908) max 467.13 MON"
+  },
+  {
+   "t": "2026-10-30T00:54:59.000Z",
+   "block": "117760526",
+   "tx": "0xd3475c3867bc33ca0dfd43fe900cd14d965160d2f9d145327c958b23f6392ba9",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.026416023,
+   "detail": "close #643406 -> 0.00000 MON + 0.0039142 WETH"
+  },
+  {
+   "t": "2026-10-30T00:55:01.000Z",
+   "block": "117760530",
+   "tx": "0x3b7135d7f39ac6aec92fdf00209cb6587a051bff12c5bf249780ac3632fe148d",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.034720941,
+   "detail": "place ask #643408 [-116875,-116874) max 412.64 MON"
+  },
+  {
+   "t": "2026-10-30T01:02:28.000Z",
+   "block": "117762012",
+   "tx": "0x832cac37fd91213cd8d0cc72a73883b05587516f59783ea3edf727225c5167c8",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0263984355,
+   "detail": "close #643395 -> 0.00000 MON + 0.0024673 WETH"
+  },
+  {
+   "t": "2026-10-30T01:05:24.000Z",
+   "block": "117762595",
+   "tx": "0xdaf750d2e96ed227dd94877cf7fb0080428a3f05a446c57808bc498d34754008",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0291274125,
+   "detail": "close #643408 -> 0.222084 MON + 0.0034712 WETH"
+  },
+  {
+   "t": "2026-10-30T01:05:42.000Z",
+   "block": "117762655",
+   "tx": "0x0e485a0a3ae3e890f09263532410c51a0c435865e87e7714aa0d77ba26ffe41f",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.072235581,
+   "detail": "place ask #643411 [-116809,-116808) max 351.75 MON; place bid #643412 [-116825,-116824) max 0.0037696 WETH"
+  },
+  {
+   "t": "2026-10-30T01:18:16.000Z",
+   "block": "117765149",
+   "tx": "0xb2df098ffa2dc9bd9b0367c3874a4ace2bb424ee863a5f2b99f361ca4c02bd46",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0291266085,
+   "detail": "close #643411 -> 0.527890 MON + 0.0029815 WETH"
+  },
+  {
+   "t": "2026-10-30T01:19:38.000Z",
+   "block": "117765421",
+   "tx": "0x474f76512086786dbcbda09d1c495b9f4490f0da27386d27e4f5f80a1c7bc4bc",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.034707474,
+   "detail": "place ask #643417 [-116769,-116768) max 329.57 MON"
+  },
+  {
+   "t": "2026-10-30T01:25:34.000Z",
+   "block": "117766598",
+   "tx": "0xff32497089d08d5b2e00c5929d21141d106c9ef92677784119682994111787b1",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.055111185,
+   "detail": "close #643417 -> 0.0593045 MON + 0.0028009 WETH; place ask #643425 [-116734,-116733) max 300.00 MON"
+  },
+  {
+   "t": "2026-10-30T01:34:55.000Z",
+   "block": "117768458",
+   "tx": "0x8c132fc770c7a3246bc63e31688f45a06f06b9da5e8197d5a490cadb2f71d2ee",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0291909285,
+   "detail": "close #643425 -> 1.45698 MON + 0.0025705 WETH"
+  },
+  {
+   "t": "2026-10-30T01:35:43.000Z",
+   "block": "117768616",
+   "tx": "0x4771e4cd18f08e950931c9e06ecc58a31580f2750a94d1a704b2bbce05f392ac",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0291274125,
+   "detail": "close #643412 -> 1.08052 MON + 0.0037787 WETH"
+  },
+  {
+   "t": "2026-10-30T01:35:44.000Z",
+   "block": "117768619",
+   "tx": "0x40e7fb07bc98768f531f079ea6ff5555e58b4e210047fc86c13c34fae6cc070b",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.049778253,
+   "detail": "place bid #643432 [-116725,-116724) max 0.0042471 WETH"
+  },
+  {
+   "t": "2026-10-30T01:36:13.000Z",
+   "block": "117768714",
+   "tx": "0x4d328389e544989b7dbce0b3515747637d6dd6004e395a6f00e8250141cb4ab4",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0281276385,
+   "detail": "close #643432 -> 498.371 MON + 0.0000021246 WETH"
+  },
+  {
+   "t": "2026-10-30T01:36:23.000Z",
+   "block": "117768748",
+   "tx": "0xbddb52719233d356f728afe7f8ff03d2d00794fa6c8ec4337772863198d43629",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.073406205,
+   "detail": "place ask #643433 [-116731,-116730) max 300.07 MON; place bid #643434 [-116747,-116746) max 0.0042372 WETH"
+  },
+  {
+   "t": "2026-10-30T01:37:39.000Z",
+   "block": "117769002",
+   "tx": "0x662c8c46609d73ece0a9631554085f816f353ad82c5524e969640243a2bb3a58",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.025312332,
+   "detail": "close #643434 -> 498.053 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T01:37:50.000Z",
+   "block": "117769036",
+   "tx": "0xf64c4243020a1266210d055c7d0df080ae41148f255d06b5ab316fbc5e957e39",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0490207845,
+   "detail": "place bid #643437 [-116780,-116779) max 0.0039522 WETH"
+  },
+  {
+   "t": "2026-10-30T01:45:24.000Z",
+   "block": "117770539",
+   "tx": "0x61fb057bf138872829e52518197e98838e63709cc1e5445c13f63860e61b7e21",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0291561555,
+   "detail": "close #643437 -> 466.559 MON + 0.0000039542 WETH"
+  },
+  {
+   "t": "2026-10-30T01:45:34.000Z",
+   "block": "117770572",
+   "tx": "0x37cbf944b88ee4cd56a5796eb3ea6e6e0de9043c7add818216d8f007cc4e5380",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0490207845,
+   "detail": "place bid #643445 [-116813,-116812) max 0.0034777 WETH"
+  },
+  {
+   "t": "2026-10-30T01:45:56.000Z",
+   "block": "117770644",
+   "tx": "0x830d10f83a3f1af111f8fdf4ba290e96a929304f4fc0710c92822f223ea938c8",
+   "kind": "REVERTED",
+   "ok": false,
+   "gasMon": 0.0253190655,
+   "detail": "reverted (no events; Monad bills the full gas limit)"
+  },
+  {
+   "t": "2026-10-30T02:11:09.000Z",
+   "block": "117775653",
+   "tx": "0xfda36a6dafb396cd9f0273904e8ba73fc07b6f4ebb62240b2a3f6868888485e8",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0291686175,
+   "detail": "close #643433 -> 300.582 MON + 0.0000043821 WETH"
+  },
+  {
+   "t": "2026-10-30T02:11:10.000Z",
+   "block": "117775659",
+   "tx": "0xe8acb66c552f93a18c8f1dd1122fff4c9a9c62458f9e40cd8c1192ea75d52403",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.034707474,
+   "detail": "place ask #643454 [-116741,-116740) max 430.46 MON"
+  },
+  {
+   "t": "2026-10-30T02:14:01.000Z",
+   "block": "117776225",
+   "tx": "0x3d870395763356555d975092d85e6b67db0db1dedab953bec1316eaed57a0337",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0523280385,
+   "detail": "close #643454 -> 0.00000 MON + 0.0036680 WETH; place ask #643457 [-116707,-116706) max 378.10 MON"
+  },
+  {
+   "t": "2026-10-30T02:15:34.000Z",
+   "block": "117776533",
+   "tx": "0x919b069e0cf97e0707b9f4ebaa2c8e5b752f0ba4b4bee330ec7469c3ff03fd3e",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0291332415,
+   "detail": "close #643445 -> 0.205747 MON + 0.0034795 WETH"
+  },
+  {
+   "t": "2026-10-30T02:21:51.000Z",
+   "block": "117777781",
+   "tx": "0x0e58883800d1b0fd3c7fae3052e35a71104736d9c997a6252f34707f805e1e1d",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.049016262,
+   "detail": "place bid #643461 [-116750,-116749) max 0.0039792 WETH"
+  },
+  {
+   "t": "2026-10-30T02:44:43.000Z",
+   "block": "117782326",
+   "tx": "0x06917627e06895b3db6e82a14f4f89c3bfc2d766618cb4799556ff56c6e24514",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0523300485,
+   "detail": "close #643461 -> 0.00000 MON + 0.0039792 WETH; place ask #643475 [-116677,-116676) max 330.87 MON"
+  },
+  {
+   "t": "2026-10-30T02:45:15.000Z",
+   "block": "117782432",
+   "tx": "0x19a709188cf90b25f5c5dcbaf5689928db075b447d28bd500b2b45f14e825326",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0625832595,
+   "detail": "close #643457 -> 0.733371 MON + 0.0032391 WETH; place bid #643476 [-116688,-116687) max 0.0042628 WETH"
+  },
+  {
+   "t": "2026-10-30T02:55:47.000Z",
+   "block": "117784527",
+   "tx": "0x72dcf660c3ef48d6cd6038ebd7cd3425fc5a47165439bfdb4d7250755bef5b15",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.07291878,
+   "detail": "close #643475 -> 331.033 MON + 0.0000014187 WETH; place bid #643479 [-116702,-116701) max 0.0039522 WETH"
+  },
+  {
+   "t": "2026-10-30T03:03:05.000Z",
+   "block": "117785977",
+   "tx": "0x251f9c7c92265c747f1a6292c554705e5af76fe9b4e9130a6c921a311b0b0037",
+   "kind": "REVERTED",
+   "ok": false,
+   "gasMon": 0.070641048,
+   "detail": "reverted (no events; Monad bills the full gas limit)"
+  },
+  {
+   "t": "2026-10-30T03:03:14.000Z",
+   "block": "117786006",
+   "tx": "0xd51303d3d83bef54a478cf44bd454f6be9ae1194f9c4989c68496a6a9de748b0",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0294968505,
+   "detail": "close #643476 -> 498.122 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T03:03:15.000Z",
+   "block": "117786011",
+   "tx": "0xba68bbfbf6f8678c182f38cd4d595c4df0ca9774f427b58d2238f05fd4f652e1",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057139074,
+   "detail": "place bid #643484 [-116714,-116713) max 0.0034331 WETH"
+  },
+  {
+   "t": "2026-10-30T03:10:31.000Z",
+   "block": "117787454",
+   "tx": "0xa5f9c0540c9b02aa0ac1a4106bb9de22d41f6f822234f40491e2547564128d54",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0629036535,
+   "detail": "close #643484 -> 0.201103 MON + 0.0034348 WETH; place ask #643487 [-116650,-116649) max 396.76 MON"
+  },
+  {
+   "t": "2026-10-30T03:22:06.000Z",
+   "block": "117789755",
+   "tx": "0x681d629f0c1e81abf0fef62911aaa3e40bf736334d9103b69afb85da7bcb63d0",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.06288687,
+   "detail": "close #643479 -> 0.231234 MON + 0.0039542 WETH; place ask #643489 [-116622,-116621) max 344.58 MON"
+  },
+  {
+   "t": "2026-10-30T03:33:16.000Z",
+   "block": "117791974",
+   "tx": "0xca5725513fff2cacabadf977377144575ffecafc880e95e6cb0f1d5a49ccd531",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.030763251,
+   "detail": "close #643487 -> 0.00000 MON + 0.0034117 WETH"
+  },
+  {
+   "t": "2026-10-30T03:33:38.000Z",
+   "block": "117792048",
+   "tx": "0xc8a0cbb4a0f096579789fbfefa1a52a1c5277ab1b28c4d41e8fbc62422c59c44",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.030756417,
+   "detail": "close #643489 -> 0.00000 MON + 0.0029713 WETH"
+  },
+  {
+   "t": "2026-10-30T03:33:53.000Z",
+   "block": "117792099",
+   "tx": "0x93ed417eb1f2bc1dbeb126a3870fedccfcf013db9ad68c3c4ea7b3474be22955",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.082987674,
+   "detail": "place ask #643494 [-116573,-116572) max 300.00 MON; place bid #643495 [-116589,-116588) max 0.0043052 WETH"
+  },
+  {
+   "t": "2026-10-30T03:38:16.000Z",
+   "block": "117792968",
+   "tx": "0x6d17140bdf3097344b08f4dc5f25d6c105f4c369e8dca4b06e7a5a516cec3b20",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.065023701,
+   "detail": "close #643494 -> 0.00000 MON + 0.0025996 WETH; place ask #643501 [-116535,-116534) max 240.08 MON"
+  },
+  {
+   "t": "2026-10-30T03:52:54.000Z",
+   "block": "117795878",
+   "tx": "0x4321dcf334b5b758799aad883af866bff57af4dfafd8fd9d93e03530083b9842",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0359029215,
+   "detail": "close #643501 -> 0.00000 MON + 0.0020883 WETH"
+  },
+  {
+   "t": "2026-10-30T04:03:54.000Z",
+   "block": "117798063",
+   "tx": "0x9cc4257d20a3485bbf500624abd8cfcd618250856aad0fc9c4c6c30fda18d9ed",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0695631855,
+   "detail": "close #643495 -> 0.00000 MON + 0.0043052 WETH; place bid #643510 [-116554,-116553) max 0.0043203 WETH"
+  },
+  {
+   "t": "2026-10-30T04:33:54.000Z",
+   "block": "117804027",
+   "tx": "0x0cd1eb292b1e1027f70e4c0532cce04e701f55fcb8877ce2d4675bbc2634ca3f",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339463875,
+   "detail": "close #643510 -> 0.249061 MON + 0.0043225 WETH"
+  },
+  {
+   "t": "2026-10-30T04:33:57.000Z",
+   "block": "117804036",
+   "tx": "0x3f43677320a067531278380061b3d0e9c546f0c89b9d6c5a2511b95ab9bc892d",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.059215002,
+   "detail": "place bid #643521 [-116469,-116468) max 0.0043572 WETH"
+  },
+  {
+   "t": "2026-10-30T05:03:58.000Z",
+   "block": "117810001",
+   "tx": "0xce189c308edc4fda3d947e9bbd1afd795e6d51fe30c4ddd76927b4822de33dd1",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.069672027,
+   "detail": "close #643521 -> 0.00000 MON + 0.0043572 WETH; place bid #643534 [-116279,-116278) max 0.0044408 WETH"
+  },
+  {
+   "t": "2026-10-30T05:33:59.000Z",
+   "block": "117815966",
+   "tx": "0xcde55583a10382b42835433f78e71a40141d90b85555c8df9da7ce4fa73b8ce0",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0742103055,
+   "detail": "close #643534 -> 0.249061 MON + 0.0044430 WETH; place bid #643549 [-116185,-116184) max 0.0044827 WETH"
+  },
+  {
+   "t": "2026-10-30T05:40:31.000Z",
+   "block": "117817264",
+   "tx": "0xecd7764ca68ce9f0b2f6e435961358581b6f327e58de8e04a04140a7082c6014",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029482278,
+   "detail": "close #643549 -> 498.122 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T05:40:41.000Z",
+   "block": "117817297",
+   "tx": "0xea0cba999f8cd2612dcd309e0b62ed0d06e81101855631b4ce0817f7be297381",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.085498164,
+   "detail": "place ask #643552 [-116210,-116209) max 300.00 MON; place bid #643553 [-116226,-116225) max 0.0044644 WETH"
+  },
+  {
+   "t": "2026-10-30T05:43:21.000Z",
+   "block": "117817827",
+   "tx": "0x2c7cda5fcaaa1d2b2cb50738060248a59288c7c48f443efafb39e2cb4e0fd6b4",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029486298,
+   "detail": "close #643553 -> 498.122 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T05:43:30.000Z",
+   "block": "117817858",
+   "tx": "0x78f592e3b2ce34f889b6d816a84a1fcb1adc5e3831b973b00e569183ab9ed36d",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0571116375,
+   "detail": "place bid #643554 [-116261,-116260) max 0.0042483 WETH"
+  },
+  {
+   "t": "2026-10-30T05:46:23.000Z",
+   "block": "117818427",
+   "tx": "0xae0ff5d9a7183bbbb8b4831e4db72621299e4e49613ac6bd6e35d2476b84f7f6",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.072900288,
+   "detail": "close #643554 -> 475.909 MON + 0.0000021252 WETH; place bid #643555 [-116300,-116299) max 0.0037138 WETH"
+  },
+  {
+   "t": "2026-10-30T05:51:48.000Z",
+   "block": "117819498",
+   "tx": "0xa2387c7f4b48c83743893f57249b497b0d6312af9a6188cc8c8802d2d059d1db",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0719327745,
+   "detail": "close #643552 -> 300.000 MON + 0.0000 WETH; place bid #643556 [-116320,-116319) max 0.0033083 WETH"
+  },
+  {
+   "t": "2026-10-30T05:55:09.000Z",
+   "block": "117820165",
+   "tx": "0x9bacfc3a0808acfeb657bdd898013baceeb010bed04a3b4759017c1d39eef39a",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029481273,
+   "detail": "close #643555 -> 417.447 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T05:59:52.000Z",
+   "block": "117821102",
+   "tx": "0xf5930f6456291f11c9300bf9f6ba891dca3f92ae581efb91da98969b52e6c894",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029478459,
+   "detail": "close #643556 -> 372.615 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T06:00:08.000Z",
+   "block": "117821156",
+   "tx": "0x787220283008f737493b03c648ed534142e00581fd15e7b82731709ba5e0058a",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0841750815,
+   "detail": "place ask #643558 [-116356,-116355) max 488.09 MON; place bid #643559 [-116372,-116371) max 0.0027446 WETH"
+  },
+  {
+   "t": "2026-10-30T06:06:12.000Z",
+   "block": "117822360",
+   "tx": "0x78c2fd87868a1a3d864768a18ab3b12b40c2db5ff2aa0ec71edac00df9855ee2",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.070578135,
+   "detail": "close #643558 -> 488.085 MON + 0.0000 WETH; place bid #643563 [-116385,-116384) max 0.0026364 WETH"
+  },
+  {
+   "t": "2026-10-30T06:17:05.000Z",
+   "block": "117824522",
+   "tx": "0xfa9d22066b2ce874f88f29e23d35fb3301033e979f2fed6e0226ca04f82a2497",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033951714,
+   "detail": "close #643559 -> 311.116 MON + 0.0000032969 WETH"
+  },
+  {
+   "t": "2026-10-30T06:21:14.000Z",
+   "block": "117825348",
+   "tx": "0x41d0838455fad390c051deabcc356fcd8944fd4c2658a635fb5769e92bd2afb8",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0571351545,
+   "detail": "place bid #643566 [-116411,-116410) max 0.0026295 WETH"
+  },
+  {
+   "t": "2026-10-30T06:36:12.000Z",
+   "block": "117828322",
+   "tx": "0x7315622d28c0070b745bd107c54135e9f013c27fbf7ac79ed6f9806e5813f3fb",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.062828178,
+   "detail": "close #643563 -> 0.451101 MON + 0.0026404 WETH; place ask #643570 [-116354,-116353) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T06:51:14.000Z",
+   "block": "117831311",
+   "tx": "0x533462e6f45ece0c5c9bb03803ba95cd02e839ed8781f3b5ef03536212580b95",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0696817755,
+   "detail": "close #643566 -> 0.00000 MON + 0.0026295 WETH; place bid #643574 [-116380,-116379) max 0.0026377 WETH"
+  },
+  {
+   "t": "2026-10-30T06:58:53.000Z",
+   "block": "117832830",
+   "tx": "0x79b790c865015c1c56d06cd4b6b5147ea80510d048fae8bb5f5880d51fe53bf0",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.070585974,
+   "detail": "close #643570 -> 500.000 MON + 0.0000 WETH; place bid #643576 [-116392,-116391) max 0.0026345 WETH"
+  },
+  {
+   "t": "2026-10-30T07:02:44.000Z",
+   "block": "117833594",
+   "tx": "0x16a58cca73b4e5f499faf1ed9d7f7c375f4997c6795a21351366006f87d8e4a1",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0294890115,
+   "detail": "close #643574 -> 298.873 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T07:10:10.000Z",
+   "block": "117835074",
+   "tx": "0xfb22b38380a42fdc57111d1b31688be5bdab52b71f461e94ed03a9d7be2f42fb",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0583544205,
+   "detail": "close #643576 -> 298.873 MON + 0.0000 WETH; place ask #643577 [-116411,-116410) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T07:32:56.000Z",
+   "block": "117839596",
+   "tx": "0xd5d62dc9c9edbfba85a0a887a0f425caa9ec4a3db6a9550e99455caec74a71c0",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.096488844,
+   "detail": "close #643577 -> 0.00000 MON + 0.0044035 WETH; place ask #643582 [-116376,-116375) max 500.00 MON; place bid #643583 [-116392,-116391) max 0.0026345 WETH"
+  },
+  {
+   "t": "2026-10-30T07:34:16.000Z",
+   "block": "117839862",
+   "tx": "0xfaf30079ca56185a771159e45c64222646f5fcf726a438032ca49c3e3e09355d",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029509614,
+   "detail": "close #643583 -> 298.873 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T07:38:25.000Z",
+   "block": "117840688",
+   "tx": "0x1f6c6a2720c757d8c81954e4e37d217c9cd545f76196eac2b2ab6f7cf80e04a2",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0581035725,
+   "detail": "place bid #643585 [-116450,-116449) max 0.0022870 WETH"
+  },
+  {
+   "t": "2026-10-30T08:02:56.000Z",
+   "block": "117845560",
+   "tx": "0x2f51fb889e89d3b3084d2e137d3baf9f61ae1adf1e3a902b6801cd0d2930d0aa",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0390917865,
+   "detail": "close #643582 -> 500.250 MON + 0.0000022095 WETH"
+  },
+  {
+   "t": "2026-10-30T08:09:25.000Z",
+   "block": "117846846",
+   "tx": "0x62b0c1d65e6d6ed1310462659ba73b3bd46082427eeea2003a3691041b5c15ad",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0356767965,
+   "detail": "close #643585 -> 0.652380 MON + 0.0022927 WETH"
+  },
+  {
+   "t": "2026-10-30T08:09:33.000Z",
+   "block": "117846874",
+   "tx": "0x6ace8e6e658962f937d6598c4e2f8481602e66cbbe356a1b75f4490cb3ec22d6",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.08419086,
+   "detail": "place ask #643593 [-116421,-116420) max 500.00 MON; place bid #643594 [-116437,-116436) max 0.0022941 WETH"
+  },
+  {
+   "t": "2026-10-30T08:14:27.000Z",
+   "block": "117847847",
+   "tx": "0xa24baa111e3526cc66a98943561f44e612565b0abe181b34605caaa2253e5955",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.062846268,
+   "detail": "close #643593 -> 0.000209140 MON + 0.0043991 WETH; place ask #643596 [-116387,-116386) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T08:37:48.000Z",
+   "block": "117852488",
+   "tx": "0xbca9d84dcd2dd841ba1f3781cfe72deaba4963fff6bcfb25f397f94b33cc8cd5",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.060615168,
+   "detail": "close #643594 -> 0.00000 MON + 0.0022941 WETH; place ask #643602 [-116376,-116375) max 496.84 MON"
+  },
+  {
+   "t": "2026-10-30T08:54:45.000Z",
+   "block": "117855855",
+   "tx": "0x5733d3fd1ffb096d1216796c4a41fda0c2dd90014d491388d430e084c6449edc",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339494025,
+   "detail": "close #643596 -> 0.597795 MON + 0.0044193 WETH"
+  },
+  {
+   "t": "2026-10-30T09:04:57.000Z",
+   "block": "117857882",
+   "tx": "0xd479a574b580cc87065be16aabd3575a613b3aa6a192633bbad0e071cf9b4c02",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057125808,
+   "detail": "place bid #643610 [-116397,-116396) max 0.0032351 WETH"
+  },
+  {
+   "t": "2026-10-30T09:07:49.000Z",
+   "block": "117858452",
+   "tx": "0xca71628369c1b8550cf481c504f99063575617ab227013bf166a394c861a37d1",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.035685942,
+   "detail": "close #643602 -> 498.306 MON + 0.000012954 WETH"
+  },
+  {
+   "t": "2026-10-30T09:13:59.000Z",
+   "block": "117859678",
+   "tx": "0xa61c86e04f5be86c733332b9a9b6b1c512dd980ca769f9a76b2832fbc2f64bc1",
+   "kind": "REVERTED",
+   "ok": false,
+   "gasMon": 0.0404593905,
+   "detail": "reverted (no events; Monad bills the full gas limit)"
+  },
+  {
+   "t": "2026-10-30T09:14:00.000Z",
+   "block": "117859681",
+   "tx": "0x5287603da9c8b82435c649d743c11ff1528ff76efbd327b97eeaa7582545eb12",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404672295,
+   "detail": "place ask #643612 [-116375,-116374) max 484.29 MON"
+  },
+  {
+   "t": "2026-10-30T09:25:41.000Z",
+   "block": "117862005",
+   "tx": "0xc8c3879b52081c1202443177cef7e780be114a0dbc4f53218af3c1939aa2b57d",
+   "kind": "REVERTED",
+   "ok": false,
+   "gasMon": 0.070634214,
+   "detail": "reverted (no events; Monad bills the full gas limit)"
+  },
+  {
+   "t": "2026-10-30T09:25:42.000Z",
+   "block": "117862008",
+   "tx": "0x9c2cab83ea32ef7cbb3c7c8661d9e8d1c3c9e45e3c4c641ee2ac281ec2efa33b",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0295135335,
+   "detail": "close #643612 -> 484.293 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T09:25:44.000Z",
+   "block": "117862013",
+   "tx": "0x783f6c42901693bd80e81dd50990763a7d0202a28ef1af2be150e761e3af5d3e",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057139074,
+   "detail": "place bid #643615 [-116414,-116413) max 0.0027680 WETH"
+  },
+  {
+   "t": "2026-10-30T09:31:08.000Z",
+   "block": "117863087",
+   "tx": "0x7b791d64790b91cce4112123cbac1029857cf9104e377f53b460e287f28e3a45",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.072903102,
+   "detail": "close #643610 -> 367.376 MON + 0.0000016184 WETH; place bid #643617 [-116430,-116429) max 0.0026245 WETH"
+  },
+  {
+   "t": "2026-10-30T09:47:31.000Z",
+   "block": "117866341",
+   "tx": "0xa48ababbc6695eedeab6ae608dd310ecfdcf4fe4699344a55ed58ff36a5fa963",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033985482,
+   "detail": "close #643617 -> 0.149503 MON + 0.0026259 WETH"
+  },
+  {
+   "t": "2026-10-30T09:47:36.000Z",
+   "block": "117866359",
+   "tx": "0x1a1e510862a67e99a8310746b5a2e3efca1ce4d644d8b6235efd2903a5eb963d",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404579835,
+   "detail": "place ask #643621 [-116387,-116386) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T09:49:12.000Z",
+   "block": "117866675",
+   "tx": "0x36366ad3508196f1d2af25569a05e58575a6b840c28a9a9db0f7477fe277faa2",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.059671473,
+   "detail": "close #643621 -> 0.00000 MON + 0.0044141 WETH; place ask #643623 [-116351,-116350) max 463.42 MON"
+  },
+  {
+   "t": "2026-10-30T09:53:36.000Z",
+   "block": "117867552",
+   "tx": "0x9d9078c89315977e5d3ed23e164c85fff64f0859eb8b600fd902ee6b62685525",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0307993305,
+   "detail": "close #643623 -> 0.00000 MON + 0.0041059 WETH"
+  },
+  {
+   "t": "2026-10-30T09:53:43.000Z",
+   "block": "117867574",
+   "tx": "0x82ae36d6aa83573cbdee6078aeedc336821d42386ccb7afc6aa209dfe818d800",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404672295,
+   "detail": "place ask #643624 [-116315,-116314) max 406.56 MON"
+  },
+  {
+   "t": "2026-10-30T09:55:45.000Z",
+   "block": "117867978",
+   "tx": "0xc5a5c16e18ed0184d94f05df5bb56009a2c80c5ebebc3951b0c2c85bf96dcb98",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0729164685,
+   "detail": "close #643615 -> 0.157354 MON + 0.0027694 WETH; place bid #643626 [-116343,-116342) max 0.0038749 WETH"
+  },
+  {
+   "t": "2026-10-30T10:02:10.000Z",
+   "block": "117869253",
+   "tx": "0x9ee8125e443cc7ade041b61ed667d28516e8b58b5a500b518743f400d596a424",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.059665041,
+   "detail": "close #643626 -> 0.00000 MON + 0.0038749 WETH; place ask #643629 [-116304,-116303) max 361.14 MON"
+  },
+  {
+   "t": "2026-10-30T10:10:24.000Z",
+   "block": "117870890",
+   "tx": "0xced26033539f99eb01fb339c66cbfa8cccb6fd3050b58cce096305b019b90ad9",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.062842248,
+   "detail": "close #643624 -> 0.196567 MON + 0.0036168 WETH; place ask #643630 [-116290,-116289) max 313.61 MON"
+  },
+  {
+   "t": "2026-10-30T10:21:48.000Z",
+   "block": "117873155",
+   "tx": "0xca86ec3c0627b7da04bdd9a7ee47c2684c603eca684b880666db869bcc42b79d",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0706146165,
+   "detail": "close #643630 -> 313.609 MON + 0.0000 WETH; place bid #643633 [-116315,-116314) max 0.0043050 WETH"
+  },
+  {
+   "t": "2026-10-30T10:24:44.000Z",
+   "block": "117873737",
+   "tx": "0x11db56eb0804885b45b657f337ae08fc81aea3ce5d3a1ebfe9d6e323dcc8a4f3",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339494025,
+   "detail": "close #643629 -> 0.427875 MON + 0.0032186 WETH"
+  },
+  {
+   "t": "2026-10-30T10:24:54.000Z",
+   "block": "117873771",
+   "tx": "0xf890c6837932f0d07078f7efc044fad4590bc3becee174d6976dedecb6a66a7a",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404579835,
+   "detail": "place ask #643634 [-116263,-116262) max 318.41 MON"
+  },
+  {
+   "t": "2026-10-30T10:52:58.000Z",
+   "block": "117879348",
+   "tx": "0x2350bf7c962c07960240182dd21741e9c3c3532aa4efe37b7bce6d6a4c1ccebd",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0728851125,
+   "detail": "close #643633 -> 0.662951 MON + 0.0043108 WETH; place bid #643640 [-116306,-116305) max 0.0044288 WETH"
+  },
+  {
+   "t": "2026-10-30T10:55:34.000Z",
+   "block": "117879865",
+   "tx": "0xdb47c560b23811adc863da30b6de7d460695ba76e874bda7b0dc867819859a68",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0583429635,
+   "detail": "close #643634 -> 318.413 MON + 0.0000 WETH; place ask #643641 [-116272,-116271) max 318.91 MON"
+  },
+  {
+   "t": "2026-10-30T11:03:13.000Z",
+   "block": "117881386",
+   "tx": "0x01ead70d2abf43fbee647d12869bc265027c19e04b22c78c8f119ffb1a2c2a59",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029477454,
+   "detail": "close #643640 -> 498.122 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T11:03:25.000Z",
+   "block": "117881426",
+   "tx": "0xc6d8c0180b31d21e4d35c22b650aa201b119903a4f0a4a816ba8977b0f6e46ef",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0571351545,
+   "detail": "place bid #643645 [-116349,-116348) max 0.0041100 WETH"
+  },
+  {
+   "t": "2026-10-30T11:11:26.000Z",
+   "block": "117883018",
+   "tx": "0x91ec1c1f894f150099aab129a86e439a3c812ef4773a620ddfe29536f42f9d19",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0719209155,
+   "detail": "close #643641 -> 318.914 MON + 0.0000 WETH; place bid #643647 [-116376,-116375) max 0.0036833 WETH"
+  },
+  {
+   "t": "2026-10-30T11:11:48.000Z",
+   "block": "117883092",
+   "tx": "0xdeff77c0f110561aeb503c688da705576a51562c6387230ffdd692c84872d5ab",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339672915,
+   "detail": "close #643645 -> 464.488 MON + 0.0000020560 WETH"
+  },
+  {
+   "t": "2026-10-30T11:16:49.000Z",
+   "block": "117884087",
+   "tx": "0x368f4371184f3586d8304f52346a8a7ff510d6401f1f3555660721c406436cb6",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057129828,
+   "detail": "place bid #643649 [-116398,-116397) max 0.0031829 WETH"
+  },
+  {
+   "t": "2026-10-30T11:37:38.000Z",
+   "block": "117888225",
+   "tx": "0x257532a4082eeda4cf861d67819753ab6b6f1f4788236985db3113b9b7cb547b",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0628708905,
+   "detail": "close #643649 -> 0.180647 MON + 0.0031844 WETH; place ask #643652 [-116354,-116353) max 437.61 MON"
+  },
+  {
+   "t": "2026-10-30T11:42:21.000Z",
+   "block": "117889161",
+   "tx": "0xbd2c0c81aad626dd822cb96635b53ffd9032c09f7d81e0403048a56a2a9bad8b",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0356836305,
+   "detail": "close #643647 -> 0.417265 MON + 0.0036869 WETH"
+  },
+  {
+   "t": "2026-10-30T11:42:49.000Z",
+   "block": "117889254",
+   "tx": "0x8381aabfd85090b084c32f59c6a86656a39f427fe26d1fa14e1edf66aac0df2c",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0571194765,
+   "detail": "place bid #643653 [-116368,-116367) max 0.0036690 WETH"
+  },
+  {
+   "t": "2026-10-30T11:44:48.000Z",
+   "block": "117889645",
+   "tx": "0xb33f44f25ff3184f8568568324537bb5a09eb20819aa612e145d2bacf00acb90",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.070628787,
+   "detail": "close #643653 -> 415.230 MON + 0.0000 WETH; place bid #643654 [-116406,-116405) max 0.0031924 WETH"
+  },
+  {
+   "t": "2026-10-30T12:00:55.000Z",
+   "block": "117892847",
+   "tx": "0x39bfd410e9edaa31b25edb07681cdbecb066c79bb3dd1ddb58be52329619dea7",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.070589994,
+   "detail": "close #643652 -> 437.614 MON + 0.0000 WETH; place bid #643656 [-116435,-116434) max 0.0027562 WETH"
+  },
+  {
+   "t": "2026-10-30T12:04:59.000Z",
+   "block": "117893657",
+   "tx": "0x651ba1ba271f9ffc4494cf659886226790ec638efb16bccc622928f3a565b3ed",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.058360149,
+   "detail": "close #643654 -> 362.667 MON + 0.0000 WETH; place ask #643657 [-116424,-116423) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T12:12:58.000Z",
+   "block": "117895243",
+   "tx": "0xde1cb7c709e616dcb93ebbdb355a26d83549d80d566f650cd719cdf9e1f4cc63",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339594525,
+   "detail": "close #643656 -> 314.239 MON + 0.0000019365 WETH"
+  },
+  {
+   "t": "2026-10-30T12:15:20.000Z",
+   "block": "117895712",
+   "tx": "0xe7e4ac61496f323e734c9c54d9330357906e14e02f431f4151ab4ae689030942",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057129828,
+   "detail": "place bid #643658 [-116458,-116457) max 0.0026172 WETH"
+  },
+  {
+   "t": "2026-10-30T12:24:09.000Z",
+   "block": "117897465",
+   "tx": "0x7970d156d5b12d22038a4915e93e69114b69c967bbe9b4f058dd7ecf72184617",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033953322,
+   "detail": "close #643657 -> 0.496706 MON + 0.0044021 WETH"
+  },
+  {
+   "t": "2026-10-30T12:24:16.000Z",
+   "block": "117897486",
+   "tx": "0x1fed61c93c67c607a82075d5a645d521a297e2e7e75fa7a14657a0f63cd00620",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404593905,
+   "detail": "place ask #643659 [-116388,-116387) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T12:33:13.000Z",
+   "block": "117899265",
+   "tx": "0x34f4f5e68efad9154e802e76d51519bab87c7847c3b10ec5066be7474b672b9f",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.062859132,
+   "detail": "close #643659 -> 0.250125 MON + 0.0044158 WETH; place ask #643661 [-116354,-116353) max 440.02 MON"
+  },
+  {
+   "t": "2026-10-30T12:34:42.000Z",
+   "block": "117899561",
+   "tx": "0x59692a11e72ed6ff18bd0a1387c4ffb0cfb070a1c61596ed5161c1ce8ccfc43d",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0307643565,
+   "detail": "close #643661 -> 0.00000 MON + 0.0038973 WETH"
+  },
+  {
+   "t": "2026-10-30T12:34:54.000Z",
+   "block": "117899601",
+   "tx": "0x14c228d724a452929049c92195e66e68f9385506891363a265f2f0c51d0de349",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404593905,
+   "detail": "place ask #643663 [-116309,-116308) max 386.58 MON"
+  },
+  {
+   "t": "2026-10-30T12:34:55.000Z",
+   "block": "117899604",
+   "tx": "0x907c2ae4f4ea093cba9867c7d0128faf5c0e9f37bdae2ce8c2d72cd7cff53494",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0696699165,
+   "detail": "close #643658 -> 0.00000 MON + 0.0026172 WETH; place bid #643664 [-116325,-116324) max 0.0040384 WETH"
+  },
+  {
+   "t": "2026-10-30T12:46:15.000Z",
+   "block": "117901855",
+   "tx": "0x48a3475a9988fd4085aeadd8867216356eb7ebb49fd457ce05081df3148e9ba4",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0729027,
+   "detail": "close #643664 -> 455.600 MON + 0.0000046316 WETH; place bid #643667 [-116360,-116359) max 0.0035217 WETH"
+  },
+  {
+   "t": "2026-10-30T13:03:04.000Z",
+   "block": "117905198",
+   "tx": "0x5fba43e3a0094c70e2c5ae0418b6bfe17f1113bd5dd785867b4d76043c65d0e1",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.070590999,
+   "detail": "close #643663 -> 386.577 MON + 0.0000 WETH; place bid #643672 [-116388,-116387) max 0.0030788 WETH"
+  },
+  {
+   "t": "2026-10-30T13:06:46.000Z",
+   "block": "117905932",
+   "tx": "0xe08dfdc6d71b52b45a1b246e11fd861fd008a7f8597fc5b4f150729228e1dde9",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033947895,
+   "detail": "close #643667 -> 398.395 MON + 0.0000013301 WETH"
+  },
+  {
+   "t": "2026-10-30T13:14:08.000Z",
+   "block": "117907398",
+   "tx": "0x911be40bb25552a943d5bf91b2120fb13ac8602dda17c3fbb7ba86b6d23f9d6e",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404593905,
+   "detail": "place ask #643677 [-116372,-116371) max 495.20 MON"
+  },
+  {
+   "t": "2026-10-30T13:17:49.000Z",
+   "block": "117908129",
+   "tx": "0x55c73774f77e689dc5dc10de65200b435d0b1b07722eef4630134f6835b26131",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033951714,
+   "detail": "close #643672 -> 349.310 MON + 0.0000015402 WETH"
+  },
+  {
+   "t": "2026-10-30T13:17:56.000Z",
+   "block": "117908152",
+   "tx": "0xbadc467136da3054921669c735161e68b9a47fc537b5025746627b1701ad39e3",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057120381,
+   "detail": "place bid #643679 [-116424,-116423) max 0.0027144 WETH"
+  },
+  {
+   "t": "2026-10-30T13:25:03.000Z",
+   "block": "117909567",
+   "tx": "0x85c0823c1f82175c66549d33ef877ddd59dd8baa58172b9fd202724c4982703c",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.070609491,
+   "detail": "close #643677 -> 495.195 MON + 0.0000 WETH; place bid #643681 [-116444,-116443) max 0.0026209 WETH"
+  },
+  {
+   "t": "2026-10-30T13:38:57.000Z",
+   "block": "117912324",
+   "tx": "0xbf59e72b48465530b586905cd8699f8c9d2a622c2ffa4f693c369754535928e7",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0628919955,
+   "detail": "close #643681 -> 0.190301 MON + 0.0026225 WETH; place ask #643684 [-116394,-116393) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T13:50:19.000Z",
+   "block": "117914577",
+   "tx": "0x42909a04ea5e52047e8ef5aa6b31e3fd1f891caa8fe645dc0dc196330625e1a8",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.070640646,
+   "detail": "close #643684 -> 500.000 MON + 0.0000 WETH; place bid #643686 [-116446,-116445) max 0.0026203 WETH"
+  },
+  {
+   "t": "2026-10-30T13:58:03.000Z",
+   "block": "117916113",
+   "tx": "0x6088e545b73ecf4fc73ed6d23149e14a4ca5b6ae65e00ce0333e8abc39568e9c",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033953322,
+   "detail": "close #643679 -> 1.00462 MON + 0.0027232 WETH"
+  },
+  {
+   "t": "2026-10-30T13:58:13.000Z",
+   "block": "117916146",
+   "tx": "0x524c24d35eb05dede52234e814c8b5678a935c552a47b23c9d5ac06f618c70b3",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.041447406,
+   "detail": "place ask #643688 [-116397,-116396) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T13:59:42.000Z",
+   "block": "117916441",
+   "tx": "0x95071030e83d4c835910efd824ba4a88694a65755ffaabda79b6044dc3c8dc0e",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.034163166,
+   "detail": "close #643688 -> 0.00000 MON + 0.0044096 WETH"
+  },
+  {
+   "t": "2026-10-30T13:59:52.000Z",
+   "block": "117916474",
+   "tx": "0x34acaecff903e72e41806a86dca20ff8c89baec5cebf2dff215cc88b1012344f",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404515515,
+   "detail": "place ask #643689 [-116356,-116355) max 472.15 MON"
+  },
+  {
+   "t": "2026-10-30T14:20:28.000Z",
+   "block": "117920562",
+   "tx": "0xc1fee1c366440b13082137110af9249c6ea0105b5f1fec0d9c78adc3710a17a7",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0729086295,
+   "detail": "close #643686 -> 0.149437 MON + 0.0026217 WETH; place bid #643691 [-116435,-116434) max 0.0032705 WETH"
+  },
+  {
+   "t": "2026-10-30T14:29:53.000Z",
+   "block": "117922432",
+   "tx": "0xb72be9a68652319b5ede8e75e777999d62e7b3f985065b994f73172593b91d3a",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0583405515,
+   "detail": "close #643689 -> 472.147 MON + 0.0000 WETH; place ask #643695 [-116402,-116401) max 478.01 MON"
+  },
+  {
+   "t": "2026-10-30T14:39:57.000Z",
+   "block": "117924434",
+   "tx": "0x24b13a4e4a017da45af398368cca24b1f57f37fcb924f5a9ed745fc5fb2f4ae4",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0628763175,
+   "detail": "close #643695 -> 0.478246 MON + 0.0042178 WETH; place ask #643696 [-116368,-116367) max 418.60 MON"
+  },
+  {
+   "t": "2026-10-30T14:50:28.000Z",
+   "block": "117926523",
+   "tx": "0xf4dbe15688f8e13e5d3648d284c42f12c5d0e74895919ef0488b4db3306e7693",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0307593315,
+   "detail": "close #643691 -> 0.00000 MON + 0.0032705 WETH"
+  },
+  {
+   "t": "2026-10-30T14:54:00.000Z",
+   "block": "117927223",
+   "tx": "0xf286c5f7e868eda4a8d22a50dd46dffa321792cb1d1ec93faf26a31c9c4a46fb",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0571194765,
+   "detail": "place bid #643703 [-116389,-116388) max 0.0037882 WETH"
+  },
+  {
+   "t": "2026-10-30T15:01:37.000Z",
+   "block": "117928737",
+   "tx": "0x6fdc7b0c21dff0c68dee62b6c558aee72b01c777f7556e473cad5ab11f82d61a",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.062859534,
+   "detail": "close #643696 -> 1.63994 MON + 0.0037170 WETH; place ask #643705 [-116334,-116333) max 369.66 MON"
+  },
+  {
+   "t": "2026-10-30T15:20:34.000Z",
+   "block": "117932499",
+   "tx": "0x3a77cbf446d6e6e5538e726d61c0c9c688316109a33f484a33cf353402b055aa",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033951714,
+   "detail": "close #643703 -> 429.835 MON + 0.0000018950 WETH"
+  },
+  {
+   "t": "2026-10-30T15:20:43.000Z",
+   "block": "117932527",
+   "tx": "0xf97db6b4b3c5cf6edba55374a73f9a223048a51ba796f0f737abba3691d01fc2",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0571273155,
+   "detail": "place bid #643710 [-116427,-116426) max 0.0037345 WETH"
+  },
+  {
+   "t": "2026-10-30T15:31:38.000Z",
+   "block": "117934696",
+   "tx": "0xbfa142ef3416e99638aea3e2226a18f0aec32116793aa81f86ca42a7bbaa4c98",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0294930315,
+   "detail": "close #643705 -> 369.662 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T15:31:52.000Z",
+   "block": "117934741",
+   "tx": "0x0071f07396e48752e0e9a0c793dbe12c70eb35d5e7dc4850de2514d5586c988a",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057125808,
+   "detail": "place bid #643715 [-116452,-116451) max 0.0032922 WETH"
+  },
+  {
+   "t": "2026-10-30T15:35:49.000Z",
+   "block": "117935527",
+   "tx": "0x88cd93b1a95e2c6790ad34f3485607f2da1cbeccd25e07bc1d40cdaa6d7dc460",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339594525,
+   "detail": "close #643710 -> 425.628 MON + 0.0000043057 WETH"
+  },
+  {
+   "t": "2026-10-30T15:40:49.000Z",
+   "block": "117936521",
+   "tx": "0xa04a7886450130d14a23e6ac9ee09948cd889683109fc805edcd8785dbd0c2c7",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057146913,
+   "detail": "place bid #643717 [-116478,-116477) max 0.0028549 WETH"
+  },
+  {
+   "t": "2026-10-30T15:42:02.000Z",
+   "block": "117936764",
+   "tx": "0x895e45f89a6a4ed98283572ab260aa3b8e7ae5e317bd17d6845641050ee7679b",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339594525,
+   "detail": "close #643715 -> 375.890 MON + 0.0000013863 WETH"
+  },
+  {
+   "t": "2026-10-30T15:47:03.000Z",
+   "block": "117937757",
+   "tx": "0xcbc1bf32128c43690e2d3d45ff3568a7d6864af6e5d2285fb297fb11e794d715",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0571194765,
+   "detail": "place bid #643719 [-116499,-116498) max 0.0026065 WETH"
+  },
+  {
+   "t": "2026-10-30T15:54:50.000Z",
+   "block": "117939304",
+   "tx": "0xa07f51c6fc9d581bde7c1590cca60923ba68e4489dde572df8fa58fc551f05b8",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.060972546,
+   "detail": "close #643719 -> 0.00000 MON + 0.0026065 WETH; place ask #643722 [-116425,-116424) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T16:00:57.000Z",
+   "block": "117940520",
+   "tx": "0xb1530218c7aba7532606f12718b2d429b132f2b8e1768c07df48eaad8e998dd7",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.062889282,
+   "detail": "close #643717 -> 0.163335 MON + 0.0028563 WETH; place ask #643723 [-116411,-116410) max 467.40 MON"
+  },
+  {
+   "t": "2026-10-30T16:06:39.000Z",
+   "block": "117941652",
+   "tx": "0xaa7109b4de5819664f3ceeec06791d30df0ea3c05a8d2f4419f52106f06f910e",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.070657731,
+   "detail": "close #643723 -> 467.401 MON + 0.0000 WETH; place bid #643724 [-116463,-116462) max 0.0029030 WETH"
+  },
+  {
+   "t": "2026-10-30T16:30:48.000Z",
+   "block": "117946451",
+   "tx": "0x1416d4d22b2220d0d16f7b61d81e126d9a8e93eff0c3412dc4a4e329f7bcbaef",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.062852499,
+   "detail": "close #643722 -> 501.150 MON + 0.000010109 WETH; place ask #643725 [-116434,-116433) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T16:38:09.000Z",
+   "block": "117947909",
+   "tx": "0x9c49ffad1fd2dab85095ba1228efd2900cc8b6ed1574067fde45228ad2e7beda",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0742302045,
+   "detail": "close #643724 -> 331.782 MON + 9.4781e-7 WETH; place bid #643730 [-116499,-116498) max 0.0026065 WETH"
+  },
+  {
+   "t": "2026-10-30T16:40:40.000Z",
+   "block": "117948410",
+   "tx": "0xfcaae9f115fe702d7684399e790764c1f43d151a0e2dc01f372cbb070eded618",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029504187,
+   "detail": "close #643730 -> 298.873 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T16:40:44.000Z",
+   "block": "117948421",
+   "tx": "0x0cb45d72211f33e9342f882b42befaea78cf4f25bee8d5eab9fd2824d80fed2f",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0571273155,
+   "detail": "place bid #643731 [-116533,-116532) max 0.0025977 WETH"
+  },
+  {
+   "t": "2026-10-30T17:00:49.000Z",
+   "block": "117952410",
+   "tx": "0x38a7e0775f3cc9babd352b5758d259afa56892cb2db4f4a8b06f13f644e98eda",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0294851925,
+   "detail": "close #643725 -> 499.999 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T17:02:03.000Z",
+   "block": "117952655",
+   "tx": "0xb0c7afc035b7d6051551d39e8552ea7f0751b0291f52b27e6e6d04d8dc651eec",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033952719,
+   "detail": "close #643731 -> 299.148 MON + 0.0000023873 WETH"
+  },
+  {
+   "t": "2026-10-30T17:02:13.000Z",
+   "block": "117952688",
+   "tx": "0x95eb21830f0c0557f5084cbd1a7fe9bfc7befd04f43aaf4d6f68d91378edf94e",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.042543258,
+   "detail": "place ask #643734 [-116552,-116551) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T17:32:14.000Z",
+   "block": "117958650",
+   "tx": "0x1950acfb585955fc9b12486e37285085fb23d3987b78e73f2c0e3c3d0125f76c",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0628600365,
+   "detail": "close #643734 -> 500.250 MON + 0.0000021709 WETH; place ask #643737 [-116572,-116571) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T18:02:15.000Z",
+   "block": "117964607",
+   "tx": "0x15ab14d1822631b3ce389ff78afdaaafd4ae1e88332977a0801deddfc3ed31cf",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0583489935,
+   "detail": "close #643737 -> 500.000 MON + 0.0000 WETH; place ask #643740 [-116625,-116624) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T18:32:16.000Z",
+   "block": "117970567",
+   "tx": "0x892d492799eab2ba863d2a5fcb7a3a4b87193ef667a970a6d1fb9aac92668143",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0583504005,
+   "detail": "close #643740 -> 500.000 MON + 0.0000 WETH; place ask #643751 [-116665,-116664) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T18:57:26.000Z",
+   "block": "117975567",
+   "tx": "0x01c987243660f78ca3277eec350516953e8aa579ca3ea245bc8284e50474cc49",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.042483159,
+   "detail": "place ask #643756 [-116640,-116639) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T18:58:17.000Z",
+   "block": "117975735",
+   "tx": "0x2b6a668d8a5775ff12e65499e73429c9f08ee5a85e216009f6d3c0ef51f33229",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.03396498,
+   "detail": "close #643751 -> 0.598701 MON + 0.0042982 WETH"
+  },
+  {
+   "t": "2026-10-30T19:03:56.000Z",
+   "block": "117976858",
+   "tx": "0xe4b4074a2e871a2aa57906195a9d6c9efd73a75ace2d2423ff1cc6f3eff1ccff",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0571351545,
+   "detail": "place bid #643757 [-116656,-116655) max 0.0025659 WETH"
+  },
+  {
+   "t": "2026-10-30T19:30:17.000Z",
+   "block": "117982090",
+   "tx": "0x485346bd532237e9dcaf6f0e98ecc0ebe526e6c24f050d59053b625eff3f9b96",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.031792773,
+   "detail": "close #643756 -> 500.621 MON + 0.0000053450 WETH"
+  },
+  {
+   "t": "2026-10-30T19:34:54.000Z",
+   "block": "117983007",
+   "tx": "0x25169a549e6bfeba66f8758eba73b31dd80988f0e7fcac4eb98a356a8da91800",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033958146,
+   "detail": "close #643757 -> 0.448310 MON + 0.0025697 WETH"
+  },
+  {
+   "t": "2026-10-30T19:35:04.000Z",
+   "block": "117983040",
+   "tx": "0xed5f795dbde94adbb7b9e9a02e00b505542858c0cdb8f9bad1b3e8120192c22c",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0819938295,
+   "detail": "place ask #643759 [-116624,-116623) max 500.00 MON; place bid #643760 [-116640,-116639) max 0.0025700 WETH"
+  },
+  {
+   "t": "2026-10-30T19:43:23.000Z",
+   "block": "117984690",
+   "tx": "0x3af4735d6d814ae61ef8df7fec30ade4eba24a8cd508589c4597a791aca5f8b7",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0607145625,
+   "detail": "close #643760 -> 0.149437 MON + 0.0025713 WETH; place ask #643763 [-116600,-116599) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-30T19:45:10.000Z",
+   "block": "117985045",
+   "tx": "0xa1efcb3dedc0ea7670296e7bfe1bbae155fe0888679c4bded26b7bb0b38320a2",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0307593315,
+   "detail": "close #643759 -> 0.00000 MON + 0.0043107 WETH"
+  },
+  {
+   "t": "2026-10-30T19:46:54.000Z",
+   "block": "117985388",
+   "tx": "0x39e46771079a334c00e4bd77f2ef44eaf3716fe38ce467a281a6f30eadedcdbe",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.030764256,
+   "detail": "close #643763 -> 0.00000 MON + 0.0043210 WETH"
+  },
+  {
+   "t": "2026-10-30T19:47:08.000Z",
+   "block": "117985436",
+   "tx": "0xc92bea736c777ffd7c4e2dd066c5b82ba8de0fe82335e0d5d0d5f18dabdd25f3",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.08419086,
+   "detail": "place ask #643764 [-116553,-116552) max 421.53 MON; place bid #643765 [-116569,-116568) max 0.0032653 WETH"
+  },
+  {
+   "t": "2026-10-30T20:01:36.000Z",
+   "block": "117988308",
+   "tx": "0x2a3600948bc2fd6b41917735aae4a117a40638a036d3c1278c52bbfd4bc4f5b0",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339494025,
+   "detail": "close #643764 -> 0.674279 MON + 0.0036659 WETH"
+  },
+  {
+   "t": "2026-10-30T20:01:38.000Z",
+   "block": "117988315",
+   "tx": "0x69a6815f31e73451bf4bd4ca9680e626db3a2b7f94210b56a30d159e5c751e51",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404658225,
+   "detail": "place ask #643767 [-116519,-116518) max 395.44 MON"
+  },
+  {
+   "t": "2026-10-30T20:10:18.000Z",
+   "block": "117990038",
+   "tx": "0x4a67dd91ce53685ed078e431ef595e2ffb6eaf2eaa41f83c7b7802f00dd2f098",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.070649892,
+   "detail": "close #643767 -> 395.444 MON + 0.0000 WETH; place bid #643768 [-116599,-116598) max 0.0034854 WETH"
+  },
+  {
+   "t": "2026-10-30T20:11:46.000Z",
+   "block": "117990329",
+   "tx": "0x425eed032e895eabe118c2ca0263ec974a7638b9ee4f8f6c1710872d8a9eb195",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0628735035,
+   "detail": "close #643765 -> 377.422 MON + 0.0000032669 WETH; place ask #643769 [-116587,-116586) max 443.36 MON"
+  },
+  {
+   "t": "2026-10-30T20:24:17.000Z",
+   "block": "117992816",
+   "tx": "0x5a1c56825eb134b31693ee973a2bd9a64f70028e92f6da6659fc0a08ba0c61d3",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0729301365,
+   "detail": "close #643769 -> 443.587 MON + 0.0000019240 WETH; place bid #643772 [-116627,-116626) max 0.0030612 WETH"
+  },
+  {
+   "t": "2026-10-30T20:27:15.000Z",
+   "block": "117993406",
+   "tx": "0x92e38dd4109e46353f11afabbcc99257a2992d0cd0b7269209173be973afb2ce",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.03397503,
+   "detail": "close #643768 -> 403.875 MON + 0.0000017436 WETH"
+  },
+  {
+   "t": "2026-10-30T20:32:17.000Z",
+   "block": "117994405",
+   "tx": "0x721fb3bb5d058bf6a10dda036ea38f85f30a4365565b592c50a0815324460acb",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057131235,
+   "detail": "place bid #643774 [-116646,-116645) max 0.0026640 WETH"
+  },
+  {
+   "t": "2026-10-30T20:46:34.000Z",
+   "block": "117997245",
+   "tx": "0x1ac1fe47ad602fbbbdc0c0a8f6e254b020bdec5f779345388b021fae1e3e7b57",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0596611215,
+   "detail": "close #643774 -> 0.00000 MON + 0.0026640 WETH; place ask #643775 [-116612,-116611) max 488.99 MON"
+  },
+  {
+   "t": "2026-10-30T20:54:17.000Z",
+   "block": "117998781",
+   "tx": "0x7083c054a94972744b2b8c34ae0dc8d179bb6f7632e6fe2889d895041128789a",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033957141,
+   "detail": "close #643772 -> 0.177767 MON + 0.0030627 WETH"
+  },
+  {
+   "t": "2026-10-30T20:54:34.000Z",
+   "block": "117998837",
+   "tx": "0x89d04fdd02cdd4ff81df23a4bc16e3378b6c1af6d63062aa732defe9c955a76b",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.030744759,
+   "detail": "close #643775 -> 0.00000 MON + 0.0042208 WETH"
+  },
+  {
+   "t": "2026-10-30T20:54:44.000Z",
+   "block": "117998870",
+   "tx": "0xe945a2a47ceda69267ce22c9ea8439d2f2f225f08eb74d4891bd39bcc91326dd",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.084214377,
+   "detail": "place ask #643776 [-116571,-116570) max 406.91 MON; place bid #643777 [-116587,-116586) max 0.0033854 WETH"
+  },
+  {
+   "t": "2026-10-30T21:00:59.000Z",
+   "block": "118000110",
+   "tx": "0xc2d773fd75b459cff1d061e4502d4d598dac3c93ef97eab32c9839b0eea81ff5",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0595334865,
+   "detail": "close #643777 -> 0.00000 MON + 0.0033854 WETH; place ask #643778 [-116560,-116559) max 382.50 MON"
+  },
+  {
+   "t": "2026-10-30T21:01:50.000Z",
+   "block": "118000280",
+   "tx": "0x567cfe2b05b198c00ca475c35d8ae08fe55b3629f29377f9353f3bb1cf1c97ee",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0307671705,
+   "detail": "close #643776 -> 0.00000 MON + 0.0035268 WETH"
+  },
+  {
+   "t": "2026-10-30T21:01:51.000Z",
+   "block": "118000283",
+   "tx": "0x720ecd558057b784763eee1e2b3dd304703dba19be819b575171e6e1a3d4f759",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0292315305,
+   "detail": "close #643778 -> 0.00000 MON + 0.0033188 WETH"
+  },
+  {
+   "t": "2026-10-30T21:02:00.000Z",
+   "block": "118000313",
+   "tx": "0x26cfbbacf12592b8c1624c04358a71e7b01df5856c6a2e179cf979f968702e38",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.08552952,
+   "detail": "place ask #643779 [-116519,-116518) max 319.85 MON; place bid #643780 [-116535,-116534) max 0.0041567 WETH"
+  },
+  {
+   "t": "2026-10-30T21:04:00.000Z",
+   "block": "118000710",
+   "tx": "0xee570a35206fcb854cd3c639a82c17a400c0b8fe83a917af61af1a08b829988c",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.03049371,
+   "detail": "close #643780 -> 478.347 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T21:04:06.000Z",
+   "block": "118000729",
+   "tx": "0x1304498fc57a2511ad8675acbd8184988b1f2b3f165a4e435a69bf7a2d15eb53",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057129828,
+   "detail": "place bid #643781 [-116570,-116569) max 0.0038776 WETH"
+  },
+  {
+   "t": "2026-10-30T21:09:54.000Z",
+   "block": "118001881",
+   "tx": "0x183b26b13b72a5fbcbbfe2e5fcd5eec407c98f4d6d7d16336dd12e19e492f500",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.070612104,
+   "detail": "close #643779 -> 319.849 MON + 0.0000 WETH; place bid #643782 [-116594,-116593) max 0.0034697 WETH"
+  },
+  {
+   "t": "2026-10-30T21:22:13.000Z",
+   "block": "118004330",
+   "tx": "0x5ffac3d0cfc9afd5449f8d173daa400beedb5468a7cfd7da8636b840773aa2c8",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0596689605,
+   "detail": "close #643782 -> 0.00000 MON + 0.0034697 WETH; place ask #643783 [-116533,-116532) max 397.28 MON"
+  },
+  {
+   "t": "2026-10-30T21:25:50.000Z",
+   "block": "118005051",
+   "tx": "0x73863acd55c6bdfed1fd8fcdbfcc1f6aa0d4144971175bc82a3ea05c2b594eb8",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.030783753,
+   "detail": "close #643783 -> 0.00000 MON + 0.0034564 WETH"
+  },
+  {
+   "t": "2026-10-30T21:26:00.000Z",
+   "block": "118005083",
+   "tx": "0xb10b21bf0938f65dca028f17f8eed51bb9a53b8e7d4b99cbc1fbbbeb0ea3371c",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404579835,
+   "detail": "place ask #643784 [-116492,-116491) max 347.29 MON"
+  },
+  {
+   "t": "2026-10-30T21:34:06.000Z",
+   "block": "118006696",
+   "tx": "0x9d426ae649030a2c0a72d7ae78cdb1560befadaf13702794eb658bccb60bd46e",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.072896871,
+   "detail": "close #643781 -> 0.223898 MON + 0.0038796 WETH; place bid #643785 [-116504,-116503) max 0.0043410 WETH"
+  },
+  {
+   "t": "2026-10-30T21:38:26.000Z",
+   "block": "118007553",
+   "tx": "0x22b05a43c40131f90171860a736936dd8fccb45d159517bf8a37a48aed66bda6",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339494025,
+   "detail": "close #643784 -> 0.000625328 MON + 0.0030339 WETH"
+  },
+  {
+   "t": "2026-10-30T21:38:37.000Z",
+   "block": "118007590",
+   "tx": "0xb63351914fb8c60872039675ce5ced8d914a1a779b922bc89a4b117c741fc44b",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404736615,
+   "detail": "place ask #643786 [-116461,-116460) max 305.18 MON"
+  },
+  {
+   "t": "2026-10-30T22:04:07.000Z",
+   "block": "118012663",
+   "tx": "0xdbb7edbaa6d5be9d9fa0e818a41274c682809328768a0ea6b7892013d7337740",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.072883605,
+   "detail": "close #643785 -> 0.217169 MON + 0.0043429 WETH; place bid #643790 [-116493,-116492) max 0.0043468 WETH"
+  },
+  {
+   "t": "2026-10-30T22:08:37.000Z",
+   "block": "118013559",
+   "tx": "0x6ee52291f5dda86a4b8e265d93f158a14031e296f141c9d6d0705608b70f946e",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0294968505,
+   "detail": "close #643786 -> 305.184 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-30T22:14:43.000Z",
+   "block": "118014771",
+   "tx": "0x05f67beefd3901c6562e37fc3dda04955753e6e8ecff3186905654edc7e85562",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404672295,
+   "detail": "place ask #643792 [-116451,-116450) max 305.30 MON"
+  },
+  {
+   "t": "2026-10-30T22:34:08.000Z",
+   "block": "118018628",
+   "tx": "0x8040c3135de3629adcabdc17c86e0025e15352ffb25fed82122916b6e0e9fb93",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0742199535,
+   "detail": "close #643790 -> 0.249061 MON + 0.0043489 WETH; place bid #643793 [-116468,-116467) max 0.0043577 WETH"
+  },
+  {
+   "t": "2026-10-30T22:41:03.000Z",
+   "block": "118020003",
+   "tx": "0x31a3cbb671e158d7433cdf15423d02fd71964542c6c57e1716226dbd2f681afa",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.059671473,
+   "detail": "close #643793 -> 0.00000 MON + 0.0043576 WETH; place ask #643794 [-116437,-116436) max 228.41 MON"
+  },
+  {
+   "t": "2026-10-30T22:56:04.000Z",
+   "block": "118022982",
+   "tx": "0xc1216bc9fa18561f58be93c9704c53ad5441d439679e3169ab21993fb36e8586",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0706459725,
+   "detail": "close #643794 -> 228.413 MON + 0.0000 WETH; place bid #643795 [-116462,-116461) max 0.0043603 WETH"
+  },
+  {
+   "t": "2026-10-30T23:03:23.000Z",
+   "block": "118024435",
+   "tx": "0x73ad0f87ac75b445f289f862fc96a94434be17bd9bf9e74aea81fa42ca0f32e3",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033957141,
+   "detail": "close #643792 -> 0.458175 MON + 0.0026820 WETH"
+  },
+  {
+   "t": "2026-10-30T23:03:33.000Z",
+   "block": "118024468",
+   "tx": "0x930c0a371fab1a1b4828890020b9fe01854ca82cff0525f90bc55262ec0c2791",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404750685,
+   "detail": "place ask #643796 [-116412,-116411) max 228.62 MON"
+  },
+  {
+   "t": "2026-10-30T23:26:05.000Z",
+   "block": "118028944",
+   "tx": "0x612032a3727727fadcda58bac34eea81b2eb6eb31e61d009cd994ae9cae1b9a4",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0696777555,
+   "detail": "close #643795 -> 0.00000 MON + 0.0043603 WETH; place bid #643797 [-116433,-116432) max 0.0043729 WETH"
+  },
+  {
+   "t": "2026-10-30T23:35:35.000Z",
+   "block": "118030831",
+   "tx": "0xe896b02f51ca97833da26910c9fd853b1039a0528607b657bb98e60cf9b07eea",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339672915,
+   "detail": "close #643796 -> 228.734 MON + 0.0000010066 WETH"
+  },
+  {
+   "t": "2026-10-30T23:59:07.000Z",
+   "block": "118035511",
+   "tx": "0x0a804278ac3306638378561b85538a2dbdcdfd1580d7c8f3436310333862ba06",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057123396,
+   "detail": "place bid #643801 [-116450,-116449) max 0.0043655 WETH"
+  },
+  {
+   "t": "2026-10-31T00:01:00.000Z",
+   "block": "118035884",
+   "tx": "0x1c240334cea29715ac60b9d793f6408dd25454d87f82d4fca0182775d07cec94",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339494025,
+   "detail": "close #643797 -> 0.747183 MON + 0.0043795 WETH"
+  },
+  {
+   "t": "2026-10-31T00:05:36.000Z",
+   "block": "118036798",
+   "tx": "0x87503e417dd23530e581213f4834f03785c0437411c90f4ee9af9e1c80312c47",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404672295,
+   "detail": "place ask #643802 [-116416,-116415) max 229.01 MON"
+  },
+  {
+   "t": "2026-10-31T00:29:08.000Z",
+   "block": "118041472",
+   "tx": "0xbd1e52f042ecd4fd8e0c8072fe78e9013f2c7d9bc2827cfabbdca823eea73284",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.072889032,
+   "detail": "close #643801 -> 0.325572 MON + 0.0043684 WETH; place bid #643803 [-116434,-116433) max 0.0043725 WETH"
+  },
+  {
+   "t": "2026-10-31T00:47:32.000Z",
+   "block": "118045129",
+   "tx": "0x0f0477ce6f4d76e463f35e5b07c5cd033e35a5a487527c2e0d429d7f0504ee80",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339594525,
+   "detail": "close #643802 -> 229.351 MON + 0.0000030238 WETH"
+  },
+  {
+   "t": "2026-10-31T00:50:30.000Z",
+   "block": "118045719",
+   "tx": "0x1a95691f56b0aeec416c21f92e9fd24fea52a93dda3e31f9a15bb30a0760533d",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404648175,
+   "detail": "place ask #643804 [-116422,-116421) max 229.31 MON"
+  },
+  {
+   "t": "2026-10-31T01:00:04.000Z",
+   "block": "118047613",
+   "tx": "0x7a90bd7257ed8292bcd25bafa7cfcd0461a1b4ba7f1968ca8dbad3f6a37fae1c",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.070636626,
+   "detail": "close #643804 -> 229.308 MON + 0.0000 WETH; place bid #643805 [-116445,-116444) max 0.0043677 WETH"
+  },
+  {
+   "t": "2026-10-31T01:18:39.000Z",
+   "block": "118051303",
+   "tx": "0xb3d0a6eaca1ec6589a3e060a6536c91188a727e50c103cd7aea598f9265351ad",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033955533,
+   "detail": "close #643803 -> 498.371 MON + 0.0000021873 WETH"
+  },
+  {
+   "t": "2026-10-31T01:19:06.000Z",
+   "block": "118051394",
+   "tx": "0xbf8e0902ccd0837da27ea86099e31c24b20c7a5c97c7fe48155f6ac3347890d8",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.094961847,
+   "detail": "close #643805 -> 498.122 MON + 0.0000 WETH; place ask #643807 [-116463,-116462) max 367.83 MON; place bid #643808 [-116479,-116478) max 0.0037624 WETH"
+  },
+  {
+   "t": "2026-10-31T01:33:35.000Z",
+   "block": "118054273",
+   "tx": "0x4bd37aa51d5e66a517ae29eefc18acc924ecc22662c71594b80a3c7f127550fd",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.059656197,
+   "detail": "close #643807 -> 0.00000 MON + 0.0032226 WETH; place ask #643810 [-116429,-116428) max 344.39 MON"
+  },
+  {
+   "t": "2026-10-31T01:35:58.000Z",
+   "block": "118054744",
+   "tx": "0x5eec0d5f050a98cb604c62d58b420d2c84c2673052d7c0a29d8a6a5692eb51a4",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033981663,
+   "detail": "close #643810 -> 0.0000748706 MON + 0.0030276 WETH"
+  },
+  {
+   "t": "2026-10-31T01:35:59.000Z",
+   "block": "118054748",
+   "tx": "0x1b7431aa43ea40fda518e6fe84da95e82869dd4f4380a1ae91dcb43464e9297b",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404672295,
+   "detail": "place ask #643812 [-116395,-116394) max 300.94 MON"
+  },
+  {
+   "t": "2026-10-31T01:49:08.000Z",
+   "block": "118057361",
+   "tx": "0x5353ec3acbf4e70bb5b300812b0cb5a78d83fe888c26f4449d62ce2c15642c0e",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0696958455,
+   "detail": "close #643808 -> 0.00000 MON + 0.0037624 WETH; place bid #643814 [-116416,-116415) max 0.0043804 WETH"
+  },
+  {
+   "t": "2026-10-31T02:01:24.000Z",
+   "block": "118059800",
+   "tx": "0xf4d6c935775006ff8d9bd9addee649a62d55c5135720f4cfb745b63f24ad03a6",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.070634214,
+   "detail": "close #643814 -> 498.122 MON + 0.0000 WETH; place bid #643817 [-116451,-116450) max 0.0041836 WETH"
+  },
+  {
+   "t": "2026-10-31T02:05:59.000Z",
+   "block": "118060712",
+   "tx": "0x8fac48d3e35f1d3b3001db822e2e279f898ec60aeb4c78580ffff7192e36df9a",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0294890115,
+   "detail": "close #643812 -> 300.945 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-31T02:08:06.000Z",
+   "block": "118061131",
+   "tx": "0x0af1f1a23c054a5c61034ff880ef00131588d609360a413000c497a92d9d37a9",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057137667,
+   "detail": "place bid #643818 [-116462,-116461) max 0.0037823 WETH"
+  },
+  {
+   "t": "2026-10-31T02:23:02.000Z",
+   "block": "118064099",
+   "tx": "0xb41990d3a211c6b3d18202703ffd2ec1ca1845658be9216412ae5a4876f8b1c2",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.062890488,
+   "detail": "close #643818 -> 0.216046 MON + 0.0037842 WETH; place ask #643819 [-116425,-116424) max 366.48 MON"
+  },
+  {
+   "t": "2026-10-31T02:35:20.000Z",
+   "block": "118066545",
+   "tx": "0x0233d59c75546e6e20a1b979d6774bec344345d2a7f7f2a67831e87c04ca0a17",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0742090995,
+   "detail": "close #643817 -> 477.736 MON + 0.0000028456 WETH; place bid #643823 [-116486,-116485) max 0.0037052 WETH"
+  },
+  {
+   "t": "2026-10-31T02:53:03.000Z",
+   "block": "118070064",
+   "tx": "0x5a5f9c13a7c7650e4a570a36928ea75b104f005069cf6fe8fec7817e01c61dd1",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0583640685,
+   "detail": "close #643819 -> 366.482 MON + 0.0000 WETH; place ask #643825 [-116474,-116473) max 423.50 MON"
+  },
+  {
+   "t": "2026-10-31T03:00:14.000Z",
+   "block": "118071492",
+   "tx": "0x0d9677559529227a8ee26252739827b9254ce2ecb8a5d4082e7bed13c9d1653a",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.071973075,
+   "detail": "close #643825 -> 423.501 MON + 0.0000 WETH; place bid #643826 [-116510,-116509) max 0.0032693 WETH"
+  },
+  {
+   "t": "2026-10-31T03:01:12.000Z",
+   "block": "118071686",
+   "tx": "0xffadc32f4f1f47241578138dc62c92d0570b0a935f5788e21fdc04a718077464",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033947895,
+   "detail": "close #643823 -> 424.512 MON + 0.0000018535 WETH"
+  },
+  {
+   "t": "2026-10-31T03:05:42.000Z",
+   "block": "118072579",
+   "tx": "0xb207916a1c601bc16cdb5f4fa246eafaf5995b398ef9f8da977b010b1b6ff286",
+   "kind": "owner tx",
+   "ok": true,
+   "gasMon": 0.00688143,
+   "detail": ""
+  },
+  {
+   "t": "2026-10-31T03:11:59.000Z",
+   "block": "118073825",
+   "tx": "0xd89f586a114ed85f9fa7e171c1a45166c7ad0c48bb0245b1c062c7e09346db20",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.040464315,
+   "detail": "place ask #643835 [-116480,-116479) max 423.28 MON"
+  },
+  {
+   "t": "2026-10-31T03:30:14.000Z",
+   "block": "118077452",
+   "tx": "0x464594ff382a8dde2e3b55d02bbd63ae2509b94d203ffa8aa29224a34e88b197",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.072891444,
+   "detail": "close #643826 -> 0.187640 MON + 0.0032709 WETH; place bid #643838 [-116493,-116492) max 0.0038813 WETH"
+  },
+  {
+   "t": "2026-10-31T03:38:25.000Z",
+   "block": "118079077",
+   "tx": "0xa1589f7e2a163545d5a66cc84a5c5d674dfac97fd4af7682c0817beb9233b107",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.071923428,
+   "detail": "close #643835 -> 423.284 MON + 0.0000 WETH; place bid #643840 [-116517,-116516) max 0.0030794 WETH"
+  },
+  {
+   "t": "2026-10-31T04:26:06.000Z",
+   "block": "118088548",
+   "tx": "0x2d29f0ad1e37aba6a09c28e84eb82a7c5c5efe8861cc78173d2472e1088dc591",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029481273,
+   "detail": "close #643838 -> 444.781 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-31T04:30:46.000Z",
+   "block": "118089474",
+   "tx": "0xa206fb9b20ec4591c7917de8b9253bbcf57c6ba5e0b8772a1d80b34505bf5efd",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057133647,
+   "detail": "place bid #643846 [-116540,-116539) max 0.0025958 WETH"
+  },
+  {
+   "t": "2026-10-31T04:33:15.000Z",
+   "block": "118089969",
+   "tx": "0x2533d1f596244c22b9479ae555393cc66135c9d4fe0c8a7a57dc4bb5ccf44f7d",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029479866,
+   "detail": "close #643840 -> 353.737 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-31T04:44:14.000Z",
+   "block": "118092150",
+   "tx": "0xc3821b5d151b0f1a61ddd2f5d645182960ca061a3817ee30178a21bd4cdf08f8",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0571351545,
+   "detail": "place bid #643857 [-116573,-116572) max 0.0023964 WETH"
+  },
+  {
+   "t": "2026-10-31T04:45:02.000Z",
+   "block": "118092308",
+   "tx": "0xd6f75e9bd22431a8af70fe1b02bdaffd41365b1cd0284ccfacecff9c731384be",
+   "kind": "REVERTED",
+   "ok": false,
+   "gasMon": 0.064893453,
+   "detail": "reverted (no events; Monad bills the full gas limit)"
+  },
+  {
+   "t": "2026-10-31T04:45:02.000Z",
+   "block": "118092310",
+   "tx": "0xe7e53f6bb91056c987bfe79545c5276c044403526627a193550cc887c77b7e8a",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339672915,
+   "detail": "close #643846 -> 299.023 MON + 0.0000012986 WETH"
+  },
+  {
+   "t": "2026-10-31T04:54:27.000Z",
+   "block": "118094182",
+   "tx": "0xa06b701ec752f6b3d4136fe877ad6b1d768b11b840ddbf737de17d557aaa635c",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404579835,
+   "detail": "place ask #643862 [-116549,-116548) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-31T05:08:33.000Z",
+   "block": "118096979",
+   "tx": "0x3ce9f577e03f66f3c783e501b2d800833a0fe94da641d71fce77b6c5ed953730",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029505795,
+   "detail": "close #643862 -> 500.000 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-31T05:20:23.000Z",
+   "block": "118099329",
+   "tx": "0x0f1b46c9322a029cbb9ad71255aab3758fc63702d0056e1f70b737203291c907",
+   "kind": "owner tx",
+   "ok": true,
+   "gasMon": 0.007083825,
+   "detail": ""
+  },
+  {
+   "t": "2026-10-31T05:31:48.000Z",
+   "block": "118101598",
+   "tx": "0xa72ea6ef431eb20d83b91d5b7dc8191d06f9923fb833be00a8b60dc91e50334a",
+   "kind": "owner tx",
+   "ok": true,
+   "gasMon": 0.00728622,
+   "detail": ""
+  },
+  {
+   "t": "2026-10-31T05:33:07.000Z",
+   "block": "118101861",
+   "tx": "0x47beddec5c9405353ba8fce9b365d376a79e837a1e9693977c0a4dc75bb0f56b",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033960357,
+   "detail": "close #643857 -> 276.959 MON + 0.0000011988 WETH"
+  },
+  {
+   "t": "2026-10-31T05:33:16.000Z",
+   "block": "118101892",
+   "tx": "0xe7a73d4842ea033f0a50c566e7f0de3a1f7e43eb05261c56bc8d96eff0aea144",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.042562956,
+   "detail": "place ask #643871 [-116591,-116590) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-31T05:45:07.000Z",
+   "block": "118104244",
+   "tx": "0xd7a1997022300430a43585cc67828082e9fb6604b9f82233284bfb114caf02f7",
+   "kind": "REVERTED",
+   "ok": false,
+   "gasMon": 0.094550802,
+   "detail": "reverted (no events; Monad bills the full gas limit)"
+  },
+  {
+   "t": "2026-10-31T05:45:08.000Z",
+   "block": "118104247",
+   "tx": "0x75a6bd22c4145ae67e34aa4b63255875b0c00a02bcdafd74b8a4bf6a3c10a217",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.030768075,
+   "detail": "close #643871 -> 0.00000 MON + 0.0043249 WETH"
+  },
+  {
+   "t": "2026-10-31T05:45:17.000Z",
+   "block": "118104278",
+   "tx": "0xfb5238c20916b9110870cc0f28c2a81f8cbc12c570bbff26f11245dc6cbe8a22",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.084187845,
+   "detail": "place ask #643874 [-116548,-116547) max 404.73 MON; place bid #643875 [-116564,-116563) max 0.0030059 WETH"
+  },
+  {
+   "t": "2026-10-31T05:54:11.000Z",
+   "block": "118106044",
+   "tx": "0x3238b8e10f59900c4dc0f55be839b1a96d872ff53e860ead21c2364f79e00572",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.029481273,
+   "detail": "close #643874 -> 404.728 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-31T06:32:29.000Z",
+   "block": "118113656",
+   "tx": "0xdf9bdf7e9f6e116482c4de5d1c31455afa970822b2c40499874b29a3aeed7814",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0628584285,
+   "detail": "close #643875 -> 347.093 MON + 0.0000015037 WETH; place ask #643878 [-116584,-116583) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-31T06:54:29.000Z",
+   "block": "118118027",
+   "tx": "0xf58e1460367b7684b96538ce76cafccbe10f786e45f9c43496a977f2f12b2b7d",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404750685,
+   "detail": "place ask #643881 [-116571,-116570) max 335.92 MON"
+  },
+  {
+   "t": "2026-10-31T07:00:14.000Z",
+   "block": "118119172",
+   "tx": "0x8e4164f2da0c87d636d053927ee8bdbac3ab6819e41e10aa9f9996b7b39ed2e6",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0295213725,
+   "detail": "close #643881 -> 335.920 MON + 0.0000 WETH"
+  },
+  {
+   "t": "2026-10-31T07:02:30.000Z",
+   "block": "118119621",
+   "tx": "0xd4fcd3883d077324c2ac023395dedcaa0d30d9d03fa47274939aaf8dc92a77db",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0628716945,
+   "detail": "close #643878 -> 500.250 MON + 0.0000021640 WETH; place ask #643885 [-116602,-116601) max 500.00 MON"
+  },
+  {
+   "t": "2026-10-31T07:08:59.000Z",
+   "block": "118120909",
+   "tx": "0x5143bc6797d91ae3358f726bfbcc45a5e720cdce47a5320c5bf3b36cb2c0e2c7",
+   "kind": "owner tx",
+   "ok": true,
+   "gasMon": 0.00688143,
+   "detail": ""
+  },
+  {
+   "t": "2026-10-31T07:32:30.000Z",
+   "block": "118125576",
+   "tx": "0x63a64099ab74db42ebfcd68b4a0d27b3976a16efd7cd5ff2ce1aa416fbe7e6c0",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0583622595,
+   "detail": "close #643885 -> 500.000 MON + 0.0000 WETH; place ask #643894 [-116633,-116632) max 371.40 MON"
+  },
+  {
+   "t": "2026-10-31T08:02:31.000Z",
+   "block": "118131511",
+   "tx": "0xa1bc36d02a865383ed15c85dedfc3e743f3bd123ba85392c03b17d35dd1a01e1",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0583568325,
+   "detail": "close #643894 -> 371.403 MON + 0.0000 WETH; place ask #643895 [-116659,-116658) max 371.40 MON"
+  },
+  {
+   "t": "2026-10-31T08:32:32.000Z",
+   "block": "118137467",
+   "tx": "0xf2f0e78792a8b33b223e03c1e5251ff09f21c6b5b56201bccae5ff4afa5369e9",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0583660785,
+   "detail": "close #643895 -> 371.403 MON + 0.0000 WETH; place ask #643919 [-116683,-116682) max 371.40 MON"
+  },
+  {
+   "t": "2026-10-31T08:54:06.000Z",
+   "block": "118141753",
+   "tx": "0x5992bf8d83992ab5e07bbc2c4f8bdb9cef1995a39dbb68715918553a5c737722",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.0404853195,
+   "detail": "place ask #643934 [-116670,-116669) max 204.27 MON"
+  },
+  {
+   "t": "2026-10-31T09:06:06.000Z",
+   "block": "118144140",
+   "tx": "0x895f2c0028adb288bd9cc5772dd7428162ec01943c739ee32750d5dd1e8fa90d",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0307671705,
+   "detail": "close #643919 -> 0.00000 MON + 0.0031832 WETH"
+  },
+  {
+   "t": "2026-10-31T09:28:01.000Z",
+   "block": "118148494",
+   "tx": "0x906d657a71cb30b31d3936fbe4dda72fb51af19e22890f4e8202e863d7a27c9d",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.057133647,
+   "detail": "place bid #643938 [-116691,-116690) max 0.0040592 WETH"
+  },
+  {
+   "t": "2026-10-31T09:32:28.000Z",
+   "block": "118149377",
+   "tx": "0x87f2cbffb3909feb6338f8c13d85f5e32c11d0d948130701ab4bfbae69fc0847",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0628932015,
+   "detail": "close #643934 -> 204.476 MON + 0.0000017530 WETH; place ask #643939 [-116679,-116678) max 204.27 MON"
+  },
+  {
+   "t": "2026-10-31T10:02:39.000Z",
+   "block": "118155372",
+   "tx": "0xa2efd70fc3ecfcd1bf916d717a37babf9708bbf58ac6917ce9beb993e4445303",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.0339916125,
+   "detail": "close #643939 -> 204.374 MON + 8.7572e-7 WETH"
+  },
+  {
+   "t": "2026-10-31T10:30:26.000Z",
+   "block": "118160892",
+   "tx": "0x670dd07e4959f389b0af7a365ec84481663f213bed4122d96ddaf94cc04158f5",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033958146,
+   "detail": "close #643938 -> 0.237235 MON + 0.0040612 WETH"
+  },
+  {
+   "t": "2026-10-31T10:30:36.000Z",
+   "block": "118160925",
+   "tx": "0x05b757b3dbb3cbe83699d4c69f23ef0723188a3722f3ceb2358009c89766f5cf",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.084230055,
+   "detail": "place ask #643941 [-116654,-116653) max 204.52 MON; place bid #643942 [-116670,-116669) max 0.0035892 WETH"
+  },
+  {
+   "t": "2026-10-31T10:34:44.000Z",
+   "block": "118161744",
+   "tx": "0xc48faadfb862c43979a93e4930e094b13434ac2df878d7f7ce51c6f955af619c",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033968799,
+   "detail": "close #643941 -> 0.102565 MON + 0.0017588 WETH"
+  },
+  {
+   "t": "2026-10-31T11:00:36.000Z",
+   "block": "118166885",
+   "tx": "0x786b9a271a8b6f1c91969074475ca2568c604b21bbc142e6a1e0178ade74b9e9",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.069687705,
+   "detail": "close #643942 -> 0.00000 MON + 0.0035892 WETH; place bid #643943 [-116658,-116657) max 0.0042756 WETH"
+  },
+  {
+   "t": "2026-10-31T12:02:20.000Z",
+   "block": "118179144",
+   "tx": "0xd83226ff4d884741193ddbcbd8cfe769e3f188a67bfdeb9d99f9e9f39eb56b23",
+   "kind": "close",
+   "ok": true,
+   "gasMon": 0.033956538,
+   "detail": "close #643943 -> 499.367 MON + 0.000010694 WETH"
+  },
+  {
+   "t": "2026-10-31T12:02:31.000Z",
+   "block": "118179181",
+   "tx": "0xe6049cc5bffe697de2fb808864b5fce39e197e16d7ada2bd0703801fc25fa47a",
+   "kind": "place",
+   "ok": true,
+   "gasMon": 0.042551097,
+   "detail": "place ask #643948 [-116678,-116677) max 337.25 MON"
+  },
+  {
+   "t": "2026-10-31T12:39:24.000Z",
+   "block": "118186510",
+   "tx": "0x734c4c4e070783a893046bb010aca79f91f337e5ad8aec32fb1f94823d96cf98",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.062866368,
+   "detail": "close #643948 -> 337.583 MON + 0.0000028919 WETH; place ask #643950 [-116688,-116687) max 337.25 MON"
+  },
+  {
+   "t": "2026-10-31T13:09:25.000Z",
+   "block": "118192470",
+   "tx": "0xd7aeed117fb0ab5f85ee56de6ebf249c57cab64fa41a3ec39c970490945c9bf1",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.064155783,
+   "detail": "close #643950 -> 337.583 MON + 0.0000028890 WETH; place ask #643955 [-116740,-116739) max 337.40 MON"
+  },
+  {
+   "t": "2026-10-31T14:04:24.000Z",
+   "block": "118203398",
+   "tx": "0x54171a4477da86da73e54df735549d715d912c89eebc821353b596b08bb5a84a",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.0628051635,
+   "detail": "close #643955 -> 337.735 MON + 0.0000028753 WETH; place ask #643961 [-116750,-116749) max 337.55 MON"
+  },
+  {
+   "t": "2026-10-31T14:48:15.000Z",
+   "block": "118212111",
+   "tx": "0x54389c322f7635437fa992228a1d1896046ded4bb8ef32097e81cfc56e311372",
+   "kind": "recentre",
+   "ok": true,
+   "gasMon": 0.074212818,
+   "detail": "close #643961 -> 0.337718 MON + 0.0028766 WETH; place bid #643966 [-116732,-116731) max 0.0037148 WETH"
+  }
+ ],
+ "scannedBlock": "118215317",
+ "seenNonce": 463,
+ "ownerNonce": 2287
+}
