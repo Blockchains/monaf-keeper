@@ -5,11 +5,15 @@ import { gateState, checkV6, makeDiscovery, type V6Cfg } from './maker-v6-gate.m
 import { clampGeometry, rangeFor } from './maker-v4-lib.mts';
 const cfg: V6Cfg = JSON.parse(readFileSync(new URL('./pools/maker-pools.json', import.meta.url), 'utf8'))['mon-usdc-v6'];
 const A = (c: string) => '0x' + c.repeat(40);
-test('v6 gate state: autoEnable discovers, kill switch wins', () => {
-  assert.equal(cfg.enabled, false); assert.equal(cfg.vault, null); assert.equal(cfg.autoEnable, true);
-  assert.equal(gateState(cfg, {}), 'discover'); assert.equal(gateState(cfg, { MAKER_V6: '0' }), 'off');
-  assert.equal(gateState({ ...cfg, autoEnable: false }, {}), 'off');
-  assert.equal(gateState({ ...cfg, vault: A('1') }, {}), 'fixed'); assert.equal(gateState({ ...cfg, vault: '0x12' }, {}), 'discover');
+test('v6 gate state: the deployed vault is fixed, kill switch wins', () => {
+  assert.equal(cfg.enabled, true);
+  assert.equal(String(cfg.vault).toLowerCase(), '0x747e7744d86586cc44286ea842f3b44444266575');
+  assert.equal(cfg.autoEnable, true);
+  assert.equal(gateState(cfg, {}), 'fixed');
+  assert.equal(gateState(cfg, { MAKER_V6: '0' }), 'off');
+  assert.equal(gateState({ ...cfg, vault: null, autoEnable: false, enabled: false }, {}), 'off');
+  assert.equal(gateState({ ...cfg, vault: null }, {}), 'discover');
+  assert.equal(gateState({ ...cfg, vault: '0x12' }, {}), 'discover');
   const d = JSON.parse(readFileSync(new URL('../site/v6/deploy.json', import.meta.url), 'utf8'));
   assert.equal(d.poolId.toLowerCase(), cfg.poolId.toLowerCase()); assert.equal(d.keeper.toLowerCase(), cfg.keeper.toLowerCase());
 });

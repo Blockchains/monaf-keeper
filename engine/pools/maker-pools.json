@@ -1,7 +1,7 @@
 {
   "mon-usdc-v6": {
-    "enabled": false,
-    "vault": null,
+    "enabled": true,
+    "vault": "0x747E7744d86586Cc44286eA842F3b44444266575",
     "version": 6,
     "owner": "0x9A4382E8C662B827cf38A1f18cb5fa07ce61Ac1F",
     "keeper": "0x85c2bBcf6d7419740d01a60874BD3F85B2c96Fe2",

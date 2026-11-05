@@ -135,7 +135,9 @@ async function makeEngine(p: Profile) {
     if (E.live) book.orders = book.orders.filter(o => !o.id.startsWith('dry'));
     const r = reconcile(book, ids); save();
     n_(`reconcile: on-chain open ${n} [${ids.join(',')}], book ${book.orders.length}, dropped ${r.dropped.map(o => o.id).join(',') || '-'}, orphans ${r.orphans.join(',') || '-'}`);
-    if (E.live && r.orphans.length) { if (E.batch) await send('execute', [r.orphans.map(BigInt), [], dl()], r.orphans.map(() => 'close' as const)); else for (const id of r.orphans) await send('close', [BigInt(id), dl()], 'close'); n_(`closed orphan vault position(s) ${r.orphans.join(',')} (funds back to the vault)`); }
+    // V6 may already hold an order placed from the desk. Leave it. Closing it as an orphan would unwind a live position.
+    if (E.live && r.orphans.length && !p.v6) { if (E.batch) await send('execute', [r.orphans.map(BigInt), [], dl()], r.orphans.map(() => 'close' as const)); else for (const id of r.orphans) await send('close', [BigInt(id), dl()], 'close'); n_(`closed orphan vault position(s) ${r.orphans.join(',')} (funds back to the vault)`); }
+    else if (p.v6 && r.orphans.length) n_(`v6: left existing position(s) ${r.orphans.join(',')} in place`);
     E.needReconcile = false;
   }
   async function runBatch(acts: ReturnType<typeof plan>) {
